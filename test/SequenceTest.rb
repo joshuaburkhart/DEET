@@ -35,17 +35,4 @@ class SequenceTest < Test::Unit::TestCase
             Sequence.new(id,bp_list)
         end
     end
-    def testAccessors
-        #both params valid
-        id = "abc:123"
-        bp_list = "atcgATCG"
-        seq = Sequence.new(id,bp_list)
-        actual_id = seq.id
-        expected_id = "abc:123"
-        assert_equal(expected_id,actual_id)
-
-        actual_bp_list = seq.bp_list
-        expected_bp_list = "atcgATCG"
-        assert_equal(expected_bp_list,actual_bp_list)
-    end
 end
