@@ -12,6 +12,6 @@ class NCBIBlastResult
         return @alignments.length
     end
     def bestAlignment()
-        return @alignments[0].e_value > @alignments[1].e_value ? @alignments[1] : @alignments[0]
+        @alignments.sort {|i,j| i.e_value <=> j.e_value}[0]
     end
 end
