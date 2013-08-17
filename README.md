@@ -33,14 +33,16 @@ Input format:
 
 Algorithm Overview:
 
-    1. parse simple fasta file, creating sequence objects for sequences 20bp or longer
-    2. perform an ncbi blast with each sequence, storing top two alignments in a blast result object
-    3. keep blast result objects for unique top alignment accession numbers (genes)
-    4. keep blast result objects with top alignment e values < x (where -20 < x < -5)
-    5. get sequence for top alignment accession number from NCBI
-    6. submit sequence to AmiGO, linking through gene product info to uniprot to complete go annotation
-    7. collect GO numbers and put into GODataRow objects
-    8. create MADataRow objects from MA data
-    9. create DoubleDataRow objects from GODataRow and MADataRow objects
+    1. work through Justin Choi's pipeline (doi: 10.1186/1471-2164-11-703)
+    2. parse Justin Choi's output along with FASTA files, representing clusters by their longest sequence
+    3. tblastx each sequence against Arthropods, Anopheles, and Drosophila
+    4. record the two alignments for each ncbi result with the lowest E values
+    5. group ncbi results by accession number of alignment with lowest E value
+    6. parse microarray data, dividing accession number groups by expression signature
+    7. use accession number groups from 5 and expression signature groups from 6 to produce a list of putative genes and paralogs
+    8. represent expression signature groups by their longest sequence
+    9. produce 2D expression plots
+    10. submit sequences to U. Indiana's annotation web tool
+    11. submit resulting annotations to a pie chart tool
 
 
