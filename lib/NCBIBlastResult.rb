@@ -1,13 +1,15 @@
 require_relative 'Sequence.rb'
 
 class NCBIBlastResult
+    attr_accessor :valid
     @sequence
     @alignments
     def initialize(sequence)
         if(!sequence.nil? && sequence.class == Sequence)
             @sequence = sequence
+            @valid = true
         else
-            raise(ArgumentError,"ERROR: sequence must be an instance of Sequence")
+            raise(ArgumentError,"ERROR: sequence must be an instance of 'Sequence' not '#{sequence.class}'")
         end
         @alignments = Array.new
     end

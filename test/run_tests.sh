@@ -7,7 +7,8 @@ TMP_FILE=cur_stdout.tmp
 rm -f $TMP_FILE
 for f in *.rb
 do
-    ruby $f >> $TMP_FILE
+    echo "######################################################" $f >> $TMP_FILE
+    ruby $f >> $TMP_FILE 2>&1
     if grep -q Fail $TMP_FILE;
     then
         echo "FAILURE DETECTED"

@@ -9,6 +9,7 @@ class NCBIBlastResultTest < Test::Unit::TestCase
         seq = Sequence.new("valid-id","atcgATCG")
         actual = NCBIBlastResult.new(seq)
         assert_not_nil(actual)
+        assert(actual.valid)
 
         #sequence invalid
         seq = nil
