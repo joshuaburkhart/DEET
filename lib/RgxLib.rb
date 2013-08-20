@@ -11,4 +11,5 @@ module RgxLib
     BLST_WAIT = /Status=WAITING/
     BLST_READY = /Status=READY/
     BLST_HEADER_GRAB = /(<p>.*?Query=)/m
+    ACCG_EXPR_SIG = /[10]+/
 end
