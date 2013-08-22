@@ -4,12 +4,13 @@ require_relative 'Sequence'
 class AccessionNumGroup
     @acc_num
     @expr_sig_len
-    @paralogs = Hash.new
+    @paralogs
     def initialize(acc_num,expr_sig_len)
         if(!acc_num.nil? && acc_num.class == String && acc_num.match(RgxLib::ALGN_ACC_NUM))
-            @acc_num = acc_num
             if(!expr_sig_len.nil? && expr_sig_len.class == Fixnum && expr_sig_len > 0)
+                @acc_num = acc_num
                 @expr_sig_len = expr_sig_len
+                @paralogs = Hash.new
             else
                 raise(ArgumentError,"ERROR: expr_sig_len '#{expr_sig_len}' not a valid length")
             end
@@ -19,43 +20,52 @@ class AccessionNumGroup
     end
     def addRes(expr_sig,res)
         if(!expr_sig.nil? && expr_sig.class == String && expr_sig.match(RgxLib::ACCG_EXPR_SIG))
-            if(!res.nil? && res.class == NCBIBlastResult)
+            if(!res.nil? && res.class == NCBIBlastResult && \
+               !res.bestAlignment.nil? && res.bestAlignment.accession_num == @acc_num)
                 if(@paralogs[expr_sig].nil?)
                     @paralogs[expr_sig] = Array.new
                 end
                 @paralogs[expr_sig] << res
             else
-                raise(ArgumentError,"ERROR: res not valid")
+                raise(ArgumentError,"ERROR: res '#{res}' not valid")
             end
         else
             raise(ArgumentError,"ERROR: expr_sig '#{expr_sig}' not a valid expression signature")
         end
     end
     def getRepresentativeSeq(expr_sig)
-        if(!expr_sig.nil? && expr_sig.calss = String \
+        if(!expr_sig.nil? && expr_sig.class == String \
            && expr_sig.length == @expr_sig_len \
            && expr_sig.match(RgxLib::ACCG_EXPR_SIG))
-            return @paralogs[expr_sig]
+            return longestSeq(@paralogs[expr_sig])
         else
             raise(ArgumentError,"ERROR: expr_sig '#{expr_sig}' not a valid expression signature")
         end
-        def getParalogExprSigs
-            gene_sig = getGeneExprSig
-            return @paralogs.to_a - [[gene_sig,@paralogs[gene_sig]]]
-        end
-        def getGeneExprSig
-            lowest_e_val = nil
-            gene_sig = nil
-            @paralogs.to_a.each {|paralog|
-                paralog.each {|ncbi_result|
-                    cur_e_val = ncbi_result.bestAlignment.e_value
-                    if(gene.nil? || cur_e_val < lowest_e_val)
-                        lowest_e_val = cur_e_val
-                        gene_sig = @paralogs.key(paralog)
-                    end
-                }
+    end
+    def getParalogExprSigs
+        gene_sig = getGeneExprSig
+        return @paralogs.values - [@paralogs[gene_sig]]
+    end
+    def getGeneExprSig
+        lowest_e_val = Float::INFINITY
+        gene_sig = nil
+        @paralogs.values.each {|paralog|
+            paralog.each {|ncbi_result|
+                cur_e_val = ncbi_result.hasAlignments? ? ncbi_result.bestAlignment.e_value : Float::INFINITY
+                if(gene_sig.nil? || cur_e_val < lowest_e_val)
+                    lowest_e_val = cur_e_val
+                    gene_sig = @paralogs.key(paralog)
+                end
             }
-            return gene_sig
+        }
+        return gene_sig
+    end
+    def longestSeq(ncbi_res_ary)
+        if(!ncbi_res_ary.nil? && ncbi_res_ary.class == Array && ncbi_res_ary.length > 0)
+            res = ncbi_res_ary.sort {|i,j| j.sequence.bp_list.length <=> i.sequence.bp_list.length }[0]
+            return res.sequence
+        else
+            raise(ArgumentError,"ERROR: ncbi_res_ary '#{ncbi_res_ary}' not a valid array")
         end
     end
 end

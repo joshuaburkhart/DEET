@@ -22,6 +22,9 @@ class NCBIBlastResult
     def addAlignment(alignment)
         @alignments << alignment
     end
+    def hasAlignments?
+        return (alignmentCount > 0)
+    end
     def alignmentCount
         return @alignments.length
     end
