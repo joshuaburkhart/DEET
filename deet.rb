@@ -21,13 +21,13 @@ if(!E_TIME.saturday? && !E_TIME.sunday? && !(E_TIME.hour > 21))
     puts "a - abort execution and manually run this program later, or not"
     puts "r - run immediately, ignoring NCBI guidelines"
     answer = gets
-    if(!answer.nil? && answer.class == String && answer.length == 1 && answer.match(/[war]/)
+    if(!answer.nil? && answer.class == String && answer.length == 1 && answer.match(/[war]/))
        if(answer == "w")
            num_minutes = 0
            t = Time.now.localtime(EASTERN_OFFSET)
            min_interval = 10
            puts "waiting..."
-           while(!t.saturday? && !t.sunday? && !(t.hour > 21)
+           while(!t.saturday? && !t.sunday? && !(t.hour > 21))
                  print "."
                  $stdout.flush
                  sleep(min_interval * 60)
@@ -60,10 +60,12 @@ Example:
     options[:fasta_files] = nil
     opts.on('-f','--fastas FASTA_FILE1,FASTA_FILE2',Array,'FASTA files') { |fasta_files|
         options[:fasta_files] = fasta_files
+        puts "accepted -f '#{options[:fasta_files]}' as argument."
     }
     options[:ma_files] = nil
     opts.on('-m','--mas MA_FILE1,MA_FILE2',Array,'MA files') { |ma_files|
         options[:ma_files] = ma_files
+        puts "accepted -m '#{options[:ma_files]}' as argument."
     }
 }
 optparse.parse!
