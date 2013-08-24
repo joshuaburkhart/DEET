@@ -1,6 +1,6 @@
 require_relative 'RgxLib'
 
-class SimpleFastaParser
+class FastaParser
     @fasta_filename
     @fasta_filehandl
     @min_len

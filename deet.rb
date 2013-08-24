@@ -11,6 +11,39 @@ require_relative 'lib/FastaParser'
 require_relative 'lib/MicroArrayHashBuilder'
 require_relative 'lib/RgxLib'
 
+EASTERN_OFFSET = 5
+E_TIME = Time.now.localtime(EASTERN_OFFSET)
+run = false
+if(!E_TIME.saturday? && !E_TIME.sunday? && !(E_TIME.hour > 21))
+    puts "Due to the intensive load this program may put on NCBI servers, this program should only be run on weekends or between the hours of 9pm and 5am."
+    puts "Choose One:"
+    puts "w - wait for next eligible execution time, then run automatically"
+    puts "a - abort execution and manually run this program later, or not"
+    puts "r - run immediately, ignoring NCBI guidelines"
+    answer = gets
+    if(!answer.nil? && answer.class == String && answer.length == 1 && answer.match(/[war]/)
+       if(answer == "w")
+           num_minutes = 0
+           t = Time.now.localtime(EASTERN_OFFSET)
+           min_interval = 10
+           puts "waiting..."
+           while(!t.saturday? && !t.sunday? && !(t.hour > 21)
+                 print "."
+                 $stdout.flush
+                 sleep(min_interval * 60)
+                 t = Time.now.localtime(EASTERN_OFFSET)
+           end         
+           puts "beginning execution after #{num_minutes} minute wait..."
+           run = true
+       elsif(answer == "a")
+           puts "aborted."
+           exit(0)
+       elsif(answer == "r")
+           puts "good luck..."
+       end
+    end
+end
+
 MIN_SEQ_BP_LEN = 20
 
 options = {}
@@ -19,7 +52,7 @@ optparse = OptionParser.new { |opts|
 Usage: ruby deet.rb -f <fasta file 1> ... <fasta file n> -m <ma file 1> ... <ma file n>
 
 Example:
-EOS
+    EOS
     opts.on('-h','--help','Display this screen'){
         puts opts
         exit
@@ -59,6 +92,7 @@ put_results = Array.new
 seqs.each {|seq|
     puts "submitting #{seq.id} to ncbi..."
     put_results << blaster.submitTblastxQuery(seq)
+    sleep(3)
 }
 puts "sequences submitted to ncbi"
 puts "==========================="
@@ -67,6 +101,7 @@ ncbi_blast_results = Array.new
 put_results.each {|p_res|
     puts "retrieving #{p_res.seq.id} from ncbi..."
     ncbi_blast_results << blaster.fetchTblastxQuery(p_res)
+    sleep(3)
 }
 puts "query results retreived"
 puts "======================="

@@ -42,14 +42,14 @@ EOS
         #both params valid
         filename = V_FASTA_N
         min_len = 20   
-        actual = SimpleFastaParser.new(filename,min_len)
+        actual = FastaParser.new(filename,min_len)
         assert_not_nil(actual)
         assert_equal(filename,actual.fasta_filename)
         assert_equal(min_len,actual.min_len)
 
         filename = I_FASTA_N
         min_len = 20
-        actual = SimpleFastaParser.new(filename,min_len)
+        actual = FastaParser.new(filename,min_len)
         assert_not_nil(actual)
         assert_equal(filename,actual.fasta_filename)
         assert_equal(min_len,actual.min_len)
@@ -58,33 +58,33 @@ EOS
         filename = "nonexistant file"
         min_len = 20
         assert_raise ArgumentError do
-            SimpleFastaParser.new(filename,min_len)
+            FastaParser.new(filename,min_len)
         end
 
         #min_len invalid
         filename = I_FASTA_N
         min_len = 'a'
         assert_raise ArgumentError do
-            SimpleFastaParser.new(filename,min_len)
+            FastaParser.new(filename,min_len)
         end
 
         filename = V_FASTA_N
         min_len = "2.91232354"
         assert_raise ArgumentError do
-            SimpleFastaParser.new(filename,min_len)
+            FastaParser.new(filename,min_len)
         end
 
         #both params invalid
         filename = "another-nonexistant, , file"
         min_len = "3.141592653589"
         assert_raise ArgumentError do
-            SimpleFastaParser.new(filename,min_len)
+            FastaParser.new(filename,min_len)
         end
     end
     def testFileOpenClose
         filename = V_FASTA_N
         min_len = 20   
-        parser = SimpleFastaParser.new(filename,min_len)
+        parser = FastaParser.new(filename,min_len)
         parser.open
         actual = parser.fasta_filehandl
         expected = File.open(V_FASTA_N,"w")
@@ -98,7 +98,7 @@ EOS
         #valid fasta
         filename = V_FASTA_N
         min_len = 8
-        parser = SimpleFastaParser.new(filename,min_len)
+        parser = FastaParser.new(filename,min_len)
         parser.open
 
         actual_seq1 = parser.nextSeq
@@ -125,7 +125,7 @@ EOS
         #invalid fasta
         filename = I_FASTA_N
         min_len = 8
-        parser = SimpleFastaParser.new(filename,min_len)
+        parser = FastaParser.new(filename,min_len)
         parser.open
 
         assert_raise ArgumentError do
@@ -137,7 +137,7 @@ EOS
         #increasing min_len
         filename = V_FASTA_N
         min_len = 9
-        parser = SimpleFastaParser.new(filename,min_len)
+        parser = FastaParser.new(filename,min_len)
         parser.open
 
         parser.nextSeq

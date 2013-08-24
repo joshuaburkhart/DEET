@@ -70,7 +70,7 @@ class NCBIBlaster
                 return PutResponse.new(rid,seq)
             else
                 puts "RID not returned. Retrying..."
-                sleep(3)
+                sleep(60)
             end
         end while(!put_result.body().match(RgxLib::BLST_RID_GRAB))
     end
