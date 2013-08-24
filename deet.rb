@@ -1,6 +1,5 @@
 #!/usr/bin/ruby
 
-require 'Time'
 require 'optparse'
 
 require_relative 'lib/Sequence'
