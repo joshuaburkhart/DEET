@@ -68,4 +68,19 @@ class AccessionNumGroup
             raise(ArgumentError,"ERROR: ncbi_res_ary '#{ncbi_res_ary}' not a valid array")
         end
     end
+    def to_s
+        string_rep =<<EOS
+GENE ACCESSION NUMBER:     #{@acc_num}
+GENE EXPRESSION SIGNATURE: #{getGeneExprSig}
+GENE REPRESENTATIVE:       #{getRepresentativeSeq(getGeneExprSig)}
+EOS
+        getParalogExprSigs.each_with_index {|psig,i|
+        p_rep =<<EOS
+\tPARALOG_#{i} EXPRESSION SIGNATURE: #{psig}
+\tPARALOG_#{i} REPRESENTATIVE:       #{getRepresentativeSeq(psig)}
+EOS
+        string_rep += p_rep
+        }
+        return string_rep
+    end
 end

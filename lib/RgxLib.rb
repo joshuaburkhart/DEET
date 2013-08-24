@@ -1,6 +1,6 @@
 module RgxLib
     SEQ_ID = /^([^\s\\n]+)$/
-    SEQ_BP_LIST = /^([atcgATCG]+)$/    
+    SEQ_BP_LIST = /^([atcgnATCGN]+)$/    
     ALGN_ACC_NUM = /^[0-9a-zA-Z._-]+$/
     ALGN_E_VAL = /^([0-9.]+(e-)?([0-9]+)?)$/
     BLST_NO_MATCH = /No significant similarity found/
@@ -16,4 +16,5 @@ module RgxLib
     MAHB_SEQ_ID_GRAB = /^([FC][0-9A-Z]+).+$/
     MAHB_Q_VAL_GRAB = /^[FC][0-9A-Z]+\s+-?[0-9.]+(e-)?([0-9]+)?\s+-?[0-9.]+(e-)?([0-9]+)?\s+-?[0-9.]+(e-)?([0-9]+)?\s+-?[0-9.]+(e-)?([0-9]+)?\s+(-?[0-9.]+(e-)?([0-9]+)?).+$/
     MAHB_M_VAL_GRAB = /^[FC][0-9A-Z]+\s+(-?[0-9.]+(e-)?([0-9]+)?).+$/
+    FASTP_ID_GRAB = /^>(\w+).*$/
 end
