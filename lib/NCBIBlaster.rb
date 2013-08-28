@@ -4,7 +4,7 @@ require_relative 'Alignment'
 require_relative 'NCBIBlastResult'
 
 class NCBIBlaster
-    CONNECTION_EXCEPTIONS = [Errno::ECONNRESET,Timeout::Error]
+    CONNECTION_EXCEPTIONS = [Errno::ECONNRESET,Timeout::Error,EOFError]
     NCBI_URI = URI('http://www.ncbi.nlm.nih.gov/blast/Blast.cgi')
     PutResponse = Struct.new(:rid,:seq)
     Format = Struct.new(:web_req_format,:file_suffix)

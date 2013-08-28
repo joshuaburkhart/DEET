@@ -13,6 +13,7 @@ require_relative 'lib/RgxLib'
 
 EASTERN_OFFSET = 5
 E_TIME = Time.now.localtime(EASTERN_OFFSET)
+START_TIME = Time.now
 run = false
 if(!E_TIME.saturday? && !E_TIME.sunday? && !(E_TIME.hour > 21))
     puts "Due to the intensive load this program may put on NCBI servers, this program should only be run on weekends or between the hours of 9pm and 5am."
@@ -92,6 +93,11 @@ puts "==================="
 blaster = NCBIBlaster.new
 put_results = Array.new
 seqs.each {|seq|
+    dt = Time.now - START_TIME
+    h = (dt / 3600).floor
+    m = ((dt % 3600) / 60).floor
+    s = ((dt % 3600) % 60).floor
+    printf("Time elapsed: %2.0f hours, %2.0f minutes, %2.0f seconds...\n",h,m,s)
     puts "submitting #{seq.id} to ncbi..."
     put_results << blaster.submitTblastxQuery(seq)
     sleep(3)
