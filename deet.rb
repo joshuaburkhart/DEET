@@ -11,7 +11,7 @@ require_relative 'lib/FastaParser'
 require_relative 'lib/MicroArrayHashBuilder'
 require_relative 'lib/RgxLib'
 
-EASTERN_OFFSET = 5
+EASTERN_OFFSET = (-5 * 3600)
 E_TIME = Time.now.localtime(EASTERN_OFFSET)
 START_TIME = Time.now
 run = false
@@ -21,7 +21,8 @@ if(!E_TIME.saturday? && !E_TIME.sunday? && !(E_TIME.hour > 21))
     puts "w - wait for next eligible execution time, then run automatically"
     puts "a - abort execution and manually run this program later, or not"
     puts "r - run immediately, ignoring NCBI guidelines"
-    answer = gets
+    print ">"
+    answer = $stdin.gets.strip
     if(!answer.nil? && answer.class == String && answer.length == 1 && answer.match(/[war]/))
        if(answer == "w")
            num_minutes = 0
