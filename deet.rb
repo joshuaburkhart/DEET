@@ -14,7 +14,8 @@ require_relative 'lib/RgxLib'
 EASTERN_OFFSET = (-5 * 3600)
 E_TIME = Time.now.localtime(EASTERN_OFFSET)
 START_TIME = Time.now
-run = false
+MIN_SEQ_BP_LEN = 20
+
 if(!E_TIME.saturday? && !E_TIME.sunday? && !(E_TIME.hour > 21))
     puts "Due to the intensive load this program may put on NCBI servers, this program should only be run on weekends or between the hours of 9pm and 5am."
     puts "Choose One:"
@@ -27,12 +28,11 @@ if(!E_TIME.saturday? && !E_TIME.sunday? && !(E_TIME.hour > 21))
        if(answer == "w")
            num_minutes = 0
            t = Time.now.localtime(EASTERN_OFFSET)
-           min_interval = 10
            puts "waiting..."
            while(!t.saturday? && !t.sunday? && !(t.hour > 21))
                  print "."
                  $stdout.flush
-                 sleep(min_interval * 60)
+                 sleep(600) #10 minutes
                  t = Time.now.localtime(EASTERN_OFFSET)
            end         
            puts "beginning execution after #{num_minutes} minute wait..."
@@ -45,8 +45,6 @@ if(!E_TIME.saturday? && !E_TIME.sunday? && !(E_TIME.hour > 21))
        end
     end
 end
-
-MIN_SEQ_BP_LEN = 20
 
 options = {}
 optparse = OptionParser.new { |opts|
@@ -93,25 +91,27 @@ puts "==================="
 
 blaster = NCBIBlaster.new
 put_results = Array.new
-seqs.each {|seq|
+ncbi_blast_results = Array.new
+seqs.each_with_index {|seq,i|
     dt = Time.now - START_TIME
     h = (dt / 3600).floor
     m = ((dt % 3600) / 60).floor
     s = ((dt % 3600) % 60).floor
-    printf("Time elapsed: %2.0f hours, %2.0f minutes, %2.0f seconds...\n",h,m,s)
-    puts "submitting #{seq.id} to ncbi..."
+    printf("submitting #{seq.id} to ncbi at %02.0f:%02.0f:%02.0f\n",h,m,s)
     put_results << blaster.submitTblastxQuery(seq)
-    sleep(3)
+    if(i % 1000 == 0)
+        put_results.each {|p_res|
+            dt = Time.now - START_TIME
+            h = (dt / 3600).floor
+            m = ((dt % 3600) / 60).floor
+            s = ((dt % 3600) % 60).floor
+            printf("retrieving #{p_res.seq.id} from ncbi at %02.0f:%02.0f:%02.0f\n",h,m,s)
+            ncbi_blast_results << blaster.fetchTblastxResult(p_res)
+            put_results.delete(p_res)
+        }
+    end
 }
-puts "sequences submitted to ncbi"
-puts "==========================="
 
-ncbi_blast_results = Array.new
-put_results.each {|p_res|
-    puts "retrieving #{p_res.seq.id} from ncbi..."
-    ncbi_blast_results << blaster.fetchTblastxQuery(p_res)
-    sleep(3)
-}
 puts "query results retreived"
 puts "======================="
 

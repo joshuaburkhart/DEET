@@ -94,7 +94,7 @@ class NCBIBlaster
             print "."
             STDOUT.flush
             get_res_body = get_result.body()
-            sleep(1)
+            sleep(3)
         end while(get_res_body.match(RgxLib::BLST_WAIT))
         end_t = Time.now
         puts
@@ -124,7 +124,7 @@ class NCBIBlaster
                 puts "Recovered from connection error..."
                 if(attempts < 10) 
                     puts "Waiting to retry..."
-                    sleep(30)
+                    sleep(60)
                     retry
                 else
                     puts "Unable to get results for #{params.join(', ')}."
