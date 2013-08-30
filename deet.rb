@@ -25,24 +25,24 @@ if(!E_TIME.saturday? && !E_TIME.sunday? && !(E_TIME.hour > 21))
     print ">"
     answer = $stdin.gets.strip
     if(!answer.nil? && answer.class == String && answer.length == 1 && answer.match(/[war]/))
-       if(answer == "w")
-           num_minutes = 0
-           t = Time.now.localtime(EASTERN_OFFSET)
-           puts "waiting..."
-           while(!t.saturday? && !t.sunday? && !(t.hour > 21))
-                 print "."
-                 $stdout.flush
-                 sleep(600) #10 minutes
-                 t = Time.now.localtime(EASTERN_OFFSET)
-           end         
-           puts "beginning execution after #{num_minutes} minute wait..."
-           run = true
-       elsif(answer == "a")
-           puts "aborted."
-           exit(0)
-       elsif(answer == "r")
-           puts "good luck..."
-       end
+        if(answer == "w")
+            num_minutes = 0
+            t = Time.now.localtime(EASTERN_OFFSET)
+            puts "waiting..."
+            while(!t.saturday? && !t.sunday? && !(t.hour > 21))
+                print "."
+                $stdout.flush
+                sleep(600) #10 minutes
+                t = Time.now.localtime(EASTERN_OFFSET)
+            end         
+            puts "beginning execution after #{num_minutes} minute wait..."
+            run = true
+        elsif(answer == "a")
+            puts "aborted."
+            exit(0)
+        elsif(answer == "r")
+            puts "good luck..."
+        end
     end
 end
 
@@ -52,7 +52,7 @@ optparse = OptionParser.new { |opts|
 Usage: ruby deet.rb -f <fasta file 1> ... <fasta file n> -m <ma file 1> ... <ma file n>
 
 Example: ruby deet.rb -f input_files/fastas/singletons.self.remained.fna -m input_files/mas/photoperiod/limma.KCLD10-KCLD22.gene.de.txt,input_files/mas/photoperiod/limma.KCLD22-KCSD22.gene.de.txt,input_files/mas/photoperiod/limma.KCSD10-KCLD10.gene.de.txt,input_files/mas/photoperiod/limma.KCSD22-KCSD10.gene.de.txt,input_files/mas/photoperiod/limma.PBLD10-KCLD10.gene.de.txt,input_files/mas/photoperiod/limma.PBLD10-PBLD22.gene.de.txt,input_files/mas/photoperiod/limma.PBLD22-KCLD22.gene.de.txt,input_files/mas/photoperiod/limma.PBSD10-KCSD10.gene.de.txt,input_files/mas/photoperiod/limma.PBSD10-PBLD10.gene.de.txt,input_files/mas/photoperiod/limma.PBSD22-KCSD22.gene.de.txt,input_files/mas/photoperiod/limma.PBSD22-PBLD22.gene.de.txt,input_files/mas/photoperiod/limma.PBSD22-PBSD10.gene.de.txt
-EOS
+    EOS
     opts.on('-h','--help','Display this screen'){
         puts opts
         exit
@@ -76,6 +76,11 @@ elsif(options[:ma_files].nil?)
     raise(ArgumentError,"ERROR: no MA files supplied")
 end
 
+puts "hashing microarray data..."
+seq_hash = MicroArrayHashBuilder.makeHash(*options[:ma_files])
+puts "microarray data hashed"
+puts "======================"
+
 seqs = Array.new
 options[:fasta_files].each {|fasta_file|
     puts "loading #{fasta_file}..."
@@ -89,6 +94,7 @@ options[:fasta_files].each {|fasta_file|
 puts "fasta files loaded."
 puts "==================="
 
+puts "querying ncbi..."
 blaster = NCBIBlaster.new
 put_results = Array.new
 ncbi_blast_results = Array.new
@@ -97,28 +103,22 @@ seqs.each_with_index {|seq,i|
     h = (dt / 3600).floor
     m = ((dt % 3600) / 60).floor
     s = ((dt % 3600) % 60).floor
-    printf("submitting #{seq.id} to ncbi at %02.0f:%02.0f:%02.0f\n",h,m,s)
+    printf("submitting sequence #{i + 1}, #{seq.id}, to ncbi at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
     put_results << blaster.submitTblastxQuery(seq)
-    if(i % 1000 == 0)
-        put_results.each {|p_res|
+    if((i + 1) % 100 == 0)
+        put_results.each_with_index {|p_res,j|
             dt = Time.now - START_TIME
             h = (dt / 3600).floor
             m = ((dt % 3600) / 60).floor
             s = ((dt % 3600) % 60).floor
-            printf("retrieving #{p_res.seq.id} from ncbi at %02.0f:%02.0f:%02.0f\n",h,m,s)
+            printf("retrieving sequence #{(i - 99) + j + 1}, #{p_res.seq.id}, from ncbi at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
             ncbi_blast_results << blaster.fetchTblastxResult(p_res)
             put_results.delete(p_res)
         }
     end
 }
-
 puts "query results retreived"
 puts "======================="
-
-puts "hashing microarray data..."
-seq_hash = MicroArrayHashBuilder.makeHash(options[:ma_files])
-puts "microarray data hashed"
-puts "======================"
 
 puts "grouping sequences..."
 acc_num_groups = Hash.new
@@ -126,13 +126,15 @@ expr_sig_len = options[:ma_files].length
 ncbi_blast_results.each {|ncbi_res|
     print "."
     $stdout.flush
-    acc_num = ncbi_res.bestAlignment.accession_num
-    if(acc_num_groups[acc_num].nil?)
-        acc_num_groups[acc_num] = AccessionNumGroup.new(acc_num,expr_sig_len)
+    if(ncbi_res.hasAlignments?)
+        acc_num = ncbi_res.bestAlignment.accession_num
+        if(acc_num_groups[acc_num].nil?)
+            acc_num_groups[acc_num] = AccessionNumGroup.new(acc_num,expr_sig_len)
+        end
+        seq_id = ncbi_res.sequence.id
+        expr_sig = seq_hash[seq_id]
+        acc_num_groups[acc_num].addRes(acc_num,expr_sig)
     end
-    seq_id = ncbi_res.sequence.id
-    expr_sig = seq_hash[seq_id]
-    acc_num_groups[acc_num].addRes(acc_num,expr_sig)
 }
 puts
 puts "sequences grouped by accession number and expression signature"

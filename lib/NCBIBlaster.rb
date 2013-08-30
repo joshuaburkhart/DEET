@@ -32,8 +32,12 @@ class NCBIBlaster
                     accession_num = $1
                     text_result.match(RgxLib::BLST_E_VAL_GRAB)
                     e_value = $1
-                    align = Alignment.new(seq,accession_num,e_value)
-                    ncbi_result.addAlignment(align)
+                    if(!accession_num.nil? && !e_value.nil?)
+                        align = Alignment.new(seq,accession_num,e_value)
+                        ncbi_result.addAlignment(align)
+                    else
+                        puts "WARNING: cannot parse alignment from below result\n#{text_result}"
+                    end
                 }
             end
         else
