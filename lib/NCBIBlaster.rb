@@ -13,16 +13,21 @@ class NCBIBlaster
         return webCall(self.method(:put),seq)
     end
     def fetchTblastxResult(put_response)
+        blast_result = nil
         if(!put_response.nil?)
-            text_result = webCall(self.method(:get),TEXT,put_response)
-            blast_result = buildNCBIResult(text_result,put_response.seq)
+            if(!put_response.seq.nil?)
+                text_result = webCall(self.method(:get),TEXT,put_response)
+                if(!text_result.nil?)
+                    blast_result = buildNCBIResult(text_result,put_response.seq)
+                end
+            end
         else
             raise(ArgumentError,"ERROR: put_response nil")
         end
         return blast_result
     end
     def buildNCBIResult(text_result,seq)
-        if(seq && text_result)
+        if(!seq.nil? && !text_result.nil?)
             ncbi_result = NCBIBlastResult.new(seq)
             if(text_result.match(RgxLib::BLST_NO_MATCH))
                 ncbi_result.valid = false

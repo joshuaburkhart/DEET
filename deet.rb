@@ -112,7 +112,10 @@ seqs.each_with_index {|seq,i|
             m = ((dt % 3600) / 60).floor
             s = ((dt % 3600) % 60).floor
             printf("retrieving sequence #{(i - 99) + j + 1}, #{p_res.seq.id}, from ncbi at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
-            ncbi_blast_results << blaster.fetchTblastxResult(p_res)
+            ncbi_blast_result = blaster.fetchTblastxResult(p_res)
+            if(!ncbi_blast_result.nil?)
+                ncbi_blast_results << ncbi_blast_result
+            end
             put_results.delete(p_res)
         }
     end
