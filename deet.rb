@@ -1,6 +1,7 @@
 #!/usr/bin/ruby
 
 require 'optparse'
+require 'set'
 
 require_relative 'lib/Sequence'
 require_relative 'lib/Alignment'
@@ -15,6 +16,8 @@ EASTERN_OFFSET = (-5 * 3600)
 E_TIME = Time.now.localtime(EASTERN_OFFSET)
 START_TIME = Time.now
 MIN_SEQ_BP_LEN = 100
+result_filename = "#{START_TIME.to_i}.result"
+log_filename = "#{START_TIME.to_i}.log"
 
 if(!E_TIME.saturday? && !E_TIME.sunday? && !(E_TIME.hour > 21))
     puts "Due to the intensive load this program may put on NCBI servers, this program should only be run on weekends or between the hours of 9pm and 5am."
@@ -76,33 +79,32 @@ elsif(options[:ma_files].nil?)
     raise(ArgumentError,"ERROR: no MA files supplied")
 end
 
+loghandl = File.open(log_filename,"w")
 puts "hashing microarray data..."
-seq_hash = MicroArrayHashBuilder.makeHash(*options[:ma_files])
+seq_hash = MicroArrayHashBuilder.makeHash(*options[:ma_files],loghandl)
 puts "microarray data hashed"
 puts "======================"
 
-seqs = Array.new
-seq_count = 0
+seqs = Set.new
 options[:fasta_files].each {|fasta_file|
     puts "loading #{fasta_file}..."
-    parser = FastaParser.new(fasta_file,MIN_SEQ_BP_LEN)
+    parser = FastaParser.new(fasta_file,MIN_SEQ_BP_LEN,loghandl)
     parser.open
     while(next_seq = parser.nextSeq)
         seqs << next_seq
         print "."
         $stdout.flush
-        seq_count += 1
     end
     parser.close
 }
 puts
-puts "fasta files loaded. (#{seq_count} total sequences)"
+puts "fasta files loaded. (#{seqs.length} total sequences)"
 puts "=================================================="
 
 puts "querying ncbi..."
-blaster = NCBIBlaster.new
-put_results = Array.new
-ncbi_blast_results = Array.new
+blaster = NCBIBlaster.new(loghandl)
+put_results = Set.new
+ncbi_blast_results = Set.new
 ret_seq_count = 0
 seqs.each_with_index {|seq,i|
     dt = Time.now - START_TIME
@@ -165,15 +167,15 @@ puts
 puts "sequences grouped by accession number and expression signature"
 puts "=============================================================="
 
-out_name = "#{Time.now.to_i}.result"
-puts "writing results to #{out_name}..."
-outhandl = File.open(out_name,"w")
+puts "writing results to #{result_filename}..."
+resulthandl = File.open(result_filename,"w")
 acc_num_groups.values.each {|acc_num_group|
     print "."
     $stdout.flush
-    outhandl.puts(acc_num_group.to_s)
-    outhandl.puts
+    resulthandl.puts(acc_num_group.to_s)
+    resulthandl.puts
 }
 puts
-outhandl.close
+resulthandl.close
+loghandl.close
 puts "done."

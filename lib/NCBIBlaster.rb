@@ -9,6 +9,15 @@ class NCBIBlaster
     PutResponse = Struct.new(:rid,:seq)
     Format = Struct.new(:web_req_format,:file_suffix)
     TEXT = Format.new("Text","txt")
+    T_LIM = 10 * 60
+    def initialize(loghandl)
+        if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
+            msg = "INFO: NCBIBlaster initialized as '#{self.to_s}'"
+            loghandl.puts msg
+        else
+            raise(ArgumentError,"ERROR: loghandl '#{loghandl}' not a valid file handle")
+        end
+    end
     def submitTblastxQuery(seq)
         return webCall(self.method(:put),seq)
     end
@@ -22,7 +31,9 @@ class NCBIBlaster
                 end
             end
         else
-            raise(ArgumentError,"ERROR: put_response nil")
+            msg = "ERROR: put_response nil"
+            loghandl.puts msg
+            raise(ArgumentError,msg)
         end
         return blast_result
     end
@@ -31,6 +42,8 @@ class NCBIBlaster
             ncbi_result = NCBIBlastResult.new(seq)
             if(text_result.match(RgxLib::BLST_NO_MATCH))
                 ncbi_result.valid = false
+                msg = "INFO: No match reported for #{seq.id}\n#{text_result}"
+                loghandl.puts msg
             else
                 2.times {
                     text_result.match(RgxLib::BLST_ACCN_GRAB)
@@ -41,12 +54,15 @@ class NCBIBlaster
                         align = Alignment.new(seq,accession_num,e_value)
                         ncbi_result.addAlignment(align)
                     else
-                        puts "WARNING: cannot parse alignment from below result\n#{text_result}"
+                        msg = "WARNING: Cannot parse alignment for #{seq.id}\n#{text_result}" 
+                        loghandl.puts msg
                     end
                 }
             end
         else
-            raise(ArgumentError,"ERROR: NCBIBlastResult cannot be build using nil objects")
+            msg = "ERROR: NCBIBlastResult cannot be build using nil objects"
+            loghandl.puts msg
+            raise(ArgumentError,msg)
         end
         return ncbi_result
     end
@@ -98,13 +114,15 @@ class NCBIBlaster
         NCBI_URI.query = URI.encode_www_form(get_params)
         get_res_body = nil
         start_t = Time.now
+        cur_t = Time.now
         begin
             get_result = Net::HTTP.get_response(NCBI_URI)
             print "."
             STDOUT.flush
             get_res_body = get_result.body()
             sleep(3)
-        end while(get_res_body.match(RgxLib::BLST_WAIT))
+            cur_t = Time.now
+        end while(get_res_body.match(RgxLib::BLST_WAIT) && (cur_t - start_t < T_LIM))
         end_t = Time.now
         puts
         if(get_result.body().match(RgxLib::BLST_READY)
@@ -114,8 +132,12 @@ class NCBIBlaster
            res_content = get_result.body().gsub(res_header,'')
            res_text = "Query ID=#{res.seq.id}\n#{res_content}"
            return res_text
+        elsif(cur_t - start_t >= T_LIM)
+            msg = "INFO: get request for #{res} exceeded time limit (#{T_LIM} seconds)"
+            loghandl.puts msg
         else
-            puts "UNKNOWN ERROR OCCURRED FOLLOWING GET"
+            msg = "WARNING: unrecognized response for #{res} following get request\n#{get_result.body()}"
+            loghandl.puts msg
         end
     end
     #pass method like self.method(:get)
@@ -136,11 +158,14 @@ class NCBIBlaster
                     sleep(60)
                     retry
                 else
-                    puts "Unable to get results for #{params.join(', ')}."
+                    msg = "WARNING: Maximum retry attempts reached, unable to get results for #{params.join(', ')}"
+                    loghandl.puts msg
                 end 
             end 
         else
-            raise ArgumentError, "wrong number of arguments (#{args_supplied} for #{args_required})"
+            msg = "wrong number of arguments (#{args_supplied} for #{args_required})"
+            loghandl.puts msg
+            raise(ArgumentError,msg)
         end 
     end
 end

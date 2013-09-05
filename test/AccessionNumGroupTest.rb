@@ -5,6 +5,14 @@ require_relative '../lib/NCBIBlastResult'
 require_relative '../lib/AccessionNumGroup'
 
 class AccessionNumGroupTest < Test::Unit::TestCase
+    def setup
+        @log_filename = "#{Time.now}.testlog"
+        @loghandl = File.open(@log_filename,"w")
+    end
+    def teardown
+        @loghandl.close
+        %x(rm #{@log_filename})
+    end
     def testCreation
         #both params valid
         acc_num = "XM_512.4"

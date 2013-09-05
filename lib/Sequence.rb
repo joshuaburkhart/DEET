@@ -14,7 +14,13 @@ class Sequence
             raise(ArgumentError, "Sequence could not be initialized with non-compliant bp_list '#{bp_list}'")
         end
     end
-    def nil?()
+    def nil?
         return @id.nil? || @bp_list.nil?
+    end
+    def eql?(other)
+        return (!@id.nil? && other.class == Sequence && @id == other.id)
+    end
+    def hash
+        return (@id.hash)
     end
 end

@@ -4,16 +4,24 @@ class FastaParser
     @fasta_filename
     @fasta_filehandl
     @min_len
-    def initialize(fasta_filename,min_len)
-        if(!fasta_filename.nil? && fasta_filename.class == String && File.exist?(fasta_filename))
-            if(!min_len.nil? && min_len.class == Fixnum && min_len > 0)
-                @fasta_filename = fasta_filename
-                @min_len = min_len
+    def initialize(fasta_filename,min_len,loghandl)
+        if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
+            if(!fasta_filename.nil? && fasta_filename.class == String && File.exist?(fasta_filename))
+                if(!min_len.nil? && min_len.class == Fixnum && min_len > 0)
+                    @fasta_filename = fasta_filename
+                    @min_len = min_len
+                else
+                    msg = "ERROR: min_len '#{min_len}' must be a positive whole number"
+                    loghandl.puts msg
+                    raise(ArgumentError,msg)
+                end
             else
-                raise(ArgumentError,"ERROR: min_len '#{min_len}' must be a positive whole number")
+                msg = "ERROR: File '#{fasta_filename}' not a valid file"
+                loghandl.puts msg
+                raise(ArgumentError,msg)
             end
         else
-            raise(ArgumentError,"ERROR: File '#{fasta_filename}' not a valid file")
+            raise(ArgumentError,"ERROR: loghandl '#{loghandl}' not a valid file handle")
         end
     end
     def fasta_filename
@@ -29,7 +37,9 @@ class FastaParser
         if(!@fasta_filename.nil?)
             @fasta_filehandl = File.open(@fasta_filename,"r")
         else
-            raise(IOError,"File not specified")
+            msg = "File not specified"
+            loghandl.puts msg
+            raise(IOError,msg)
         end
     end
     def nextSeq()
@@ -67,7 +77,9 @@ class FastaParser
         if(!fileHandlIssue)
             line = @fasta_filehandl.gets
             if(!line.match(RgxLib::FASTP_ID_GRAB) && !line.match(RgxLib::SEQ_BP_LIST))
-                raise(ArgumentError,"ERROR: '#{line}' not valid fasta format")
+                msg = "ERROR: '#{line}' not valid fasta format"
+                loghandl.puts msg
+                raise(ArgumentError,msg)
             end
         end
         return line

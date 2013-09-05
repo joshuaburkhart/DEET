@@ -1,4 +1,5 @@
 *.swp
 *.swo
 *.result
+*.log
 input_files/
