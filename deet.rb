@@ -14,7 +14,7 @@ require_relative 'lib/RgxLib'
 EASTERN_OFFSET = (-5 * 3600)
 E_TIME = Time.now.localtime(EASTERN_OFFSET)
 START_TIME = Time.now
-MIN_SEQ_BP_LEN = 20
+MIN_SEQ_BP_LEN = 100
 
 if(!E_TIME.saturday? && !E_TIME.sunday? && !(E_TIME.hour > 21))
     puts "Due to the intensive load this program may put on NCBI servers, this program should only be run on weekends or between the hours of 9pm and 5am."
@@ -82,44 +82,66 @@ puts "microarray data hashed"
 puts "======================"
 
 seqs = Array.new
+seq_count = 0
 options[:fasta_files].each {|fasta_file|
     puts "loading #{fasta_file}..."
     parser = FastaParser.new(fasta_file,MIN_SEQ_BP_LEN)
     parser.open
     while(next_seq = parser.nextSeq)
         seqs << next_seq
+        print "."
+        $stdout.flush
+        seq_count += 1
     end
     parser.close
 }
-puts "fasta files loaded."
-puts "==================="
+puts
+puts "fasta files loaded. (#{seq_count} total sequences)"
+puts "=================================================="
 
 puts "querying ncbi..."
 blaster = NCBIBlaster.new
 put_results = Array.new
 ncbi_blast_results = Array.new
+ret_seq_count = 0
 seqs.each_with_index {|seq,i|
     dt = Time.now - START_TIME
     h = (dt / 3600).floor
     m = ((dt % 3600) / 60).floor
     s = ((dt % 3600) % 60).floor
-    printf("submitting sequence #{i + 1}, #{seq.id}, to ncbi at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+    printf("submitting sequence #{i}, #{seq.id}, to ncbi at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
     put_results << blaster.submitTblastxQuery(seq)
-    if((i + 1) % 100 == 0)
+    if(i % 100 == 99)
         put_results.each_with_index {|p_res,j|
             dt = Time.now - START_TIME
             h = (dt / 3600).floor
             m = ((dt % 3600) / 60).floor
             s = ((dt % 3600) % 60).floor
-            printf("retrieving sequence #{(i - 99) + j + 1}, #{p_res.seq.id}, from ncbi at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+            printf("retrieving sequence #{ret_seq_count}, #{p_res.seq.id}, from ncbi at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
             ncbi_blast_result = blaster.fetchTblastxResult(p_res)
             if(!ncbi_blast_result.nil?)
                 ncbi_blast_results << ncbi_blast_result
             end
             put_results.delete(p_res)
+            ret_seq_count += 1
         }
     end
 }
+if(put_results.length > 0)
+    put_results.each_with_index {|p_res,j|
+        dt = Time.now - START_TIME
+        h = (dt / 3600).floor
+        m = ((dt % 3600) / 60).floor
+        s = ((dt % 3600) % 60).floor
+        printf("retrieving sequence #{ret_seq_count}, #{p_res.seq.id}, from ncbi at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+        ncbi_blast_result = blaster.fetchTblastxResult(p_res)
+        if(!ncbi_blast_result.nil?)
+            ncbi_blast_results << ncbi_blast_result
+        end
+        put_results.delete(p_res)
+        ret_seq_count += 1
+    }
+end
 puts "query results retreived"
 puts "======================="
 
@@ -136,21 +158,21 @@ ncbi_blast_results.each {|ncbi_res|
         end
         seq_id = ncbi_res.sequence.id
         expr_sig = seq_hash[seq_id]
-        acc_num_groups[acc_num].addRes(acc_num,expr_sig)
+        acc_num_groups[acc_num].addRes(ncbi_res,expr_sig)
     end
 }
 puts
 puts "sequences grouped by accession number and expression signature"
 puts "=============================================================="
 
-puts "writing results to hard disk..."
-outhandl = File.open("deet.#{Time.now.to_i}.result","w")
+out_name = "#{Time.now.to_i}.result"
+puts "writing results to #{out_name}..."
+outhandl = File.open(out_name,"w")
 acc_num_groups.values.each {|acc_num_group|
     print "."
     $stdout.flush
-    outhandl.puts "-----------------"
-    outhandl.print(acc_num_group.to_s)
-    outhandl.puts "-----------------"
+    outhandl.puts(acc_num_group.to_s)
+    outhandl.puts
 }
 puts
 outhandl.close

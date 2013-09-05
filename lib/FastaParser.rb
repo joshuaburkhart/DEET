@@ -37,24 +37,26 @@ class FastaParser
         seq_bp_list = ""
         seq = nil
         id_line = nil
-        if(@buffer.nil?)
-            id_line = readFastaLine
-        else
-            id_line = @buffer
-        end
-        if(!id_line.nil?)
-            if(id_line.match(RgxLib::FASTP_ID_GRAB))
-                seq_id = $1
-                bp_line = readFastaLine
-                while(!bp_line.nil? && bp_line.match(RgxLib::SEQ_BP_LIST))
-                    seq_bp_list += $1
-                    bp_line = readFastaLine
-                end
-                @buffer = bp_line
+        while(seq.nil? && !fileHandlIssue)
+            if(@buffer.nil?)
+                id_line = readFastaLine
+            else
+                id_line = @buffer
             end
-            if(!seq_id.nil? && !seq_bp_list.nil?)
-                if(seq_bp_list.length >= @min_len)
-                    seq = Sequence.new(seq_id,seq_bp_list)
+            if(!id_line.nil?)
+                if(id_line.match(RgxLib::FASTP_ID_GRAB))
+                    seq_id = $1
+                    bp_line = readFastaLine
+                    while(!bp_line.nil? && bp_line.match(RgxLib::SEQ_BP_LIST))
+                        seq_bp_list += $1
+                        bp_line = readFastaLine
+                    end
+                    @buffer = bp_line
+                end
+                if(!seq_id.nil? && !seq_bp_list.nil?)
+                    if(seq_bp_list.length >= @min_len)
+                        seq = Sequence.new(seq_id,seq_bp_list)
+                    end
                 end
             end
         end
@@ -62,13 +64,16 @@ class FastaParser
     end
     def readFastaLine
         line = nil
-        if(!@fasta_filehandl.nil? && !@fasta_filehandl.closed? && !@fasta_filehandl.eof)
+        if(!fileHandlIssue)
             line = @fasta_filehandl.gets
             if(!line.match(RgxLib::FASTP_ID_GRAB) && !line.match(RgxLib::SEQ_BP_LIST))
                 raise(ArgumentError,"ERROR: '#{line}' not valid fasta format")
             end
         end
         return line
+    end
+    def fileHandlIssue
+        return @fasta_filehandl.nil? || @fasta_filehandl.closed? || @fasta_filehandl.eof
     end
     def close()
         @fasta_filehandl.close
