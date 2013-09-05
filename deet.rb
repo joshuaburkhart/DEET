@@ -112,7 +112,7 @@ seqs.each_with_index {|seq,i|
     printf("submitting sequence #{i}, #{seq.id}, to ncbi at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
     put_results << blaster.submitTblastxQuery(seq)
     if(i % 100 == 99)
-        put_results.each_with_index {|p_res,j|
+        put_results.each {|p_res|
             dt = Time.now - START_TIME
             h = (dt / 3600).floor
             m = ((dt % 3600) / 60).floor
@@ -128,17 +128,17 @@ seqs.each_with_index {|seq,i|
     end
 }
 if(put_results.length > 0)
-    put_results.each_with_index {|p_res,j|
+    put_results.each {|rem_p_res|
         dt = Time.now - START_TIME
         h = (dt / 3600).floor
         m = ((dt % 3600) / 60).floor
         s = ((dt % 3600) % 60).floor
-        printf("retrieving sequence #{ret_seq_count}, #{p_res.seq.id}, from ncbi at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
-        ncbi_blast_result = blaster.fetchTblastxResult(p_res)
+        printf("retrieving sequence #{ret_seq_count}, #{rem_p_res.seq.id}, from ncbi at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+        ncbi_blast_result = blaster.fetchTblastxResult(rem_p_res)
         if(!ncbi_blast_result.nil?)
             ncbi_blast_results << ncbi_blast_result
         end
-        put_results.delete(p_res)
+        put_results.delete(rem_p_res)
         ret_seq_count += 1
     }
 end

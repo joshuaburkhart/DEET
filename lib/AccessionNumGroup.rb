@@ -103,6 +103,7 @@ EOS
             best_paralog_rep = getRepresentativeSeq(psig)
             best_paralog_ncbi_res = getRepresentativeRes(psig)
             p_rep =<<EOS
+
 \t#{@acc_num} PARALOG #{i + 1}
 \t#{'-'*@acc_num.length}----------
 \t\tSIGNATURE: #{psig}
