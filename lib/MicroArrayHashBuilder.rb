@@ -4,11 +4,12 @@ class MicroArrayHashBuilder
     QLIM = 0.05
     def self.makeHash(*ma_filenames,loghandl)
         if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
+            @loghandl = loghandl
             if(!ma_filenames.nil? && ma_filenames.class == Array && ma_filenames.length > 0)
                 ma_filenames.each {|f|
                     if(!File.exists?(f))
                         msg = "ERROR: file '#{f}' does not exist"
-                        loghandl.puts msg
+                        @loghandl.puts msg
                         raise(ArgumentError,msg)
                     end
                 }
@@ -35,14 +36,14 @@ class MicroArrayHashBuilder
                         end
                     else
                         msg = "ERROR: file '#{f}' do not have a valid MA header"
-                        loghandl.puts msg
+                        @loghandl.puts msg
                         raise(ArgumentError,msg)
                     end
                 }
                 return seq_sigs
             else
                 msg = "ERROR: ma_filenames '#{ma_filenames}' not a valid array of filenames"
-                loghandl.puts msg
+                @loghandl.puts msg
                 raise(ArgumentError,msg)
             end
         else

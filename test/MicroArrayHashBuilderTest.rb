@@ -40,16 +40,20 @@ EOS
         ivh = File.open("invalid_ma_dat.txt","w")
         ivh.puts(invalid_ma_dat)
         ivh.close
+        @log_filename = "#{Time.now.to_i}.testlog"
+        @loghandl = File.open(@log_filename,"w")
     end
     def teardown
         #delete sample ma_files from disk
         %x(rm valid_ma_dat1.txt)
         %x(rm valid_ma_dat2.txt)
         %x(rm invalid_ma_dat.txt)
+        @loghandl.close
+        %x(rm #{@log_filename})
     end
     def testMakeHash
         #single valid ma_filename
-        seq_hash = MicroArrayHashBuilder.makeHash("valid_ma_dat1.txt")
+        seq_hash = MicroArrayHashBuilder.makeHash("valid_ma_dat1.txt",@loghandl)
         assert_not_nil(seq_hash)
         assert_equal(Hash,seq_hash.class)
         actual = seq_hash["F5BTJ3O01A06K0"]
@@ -81,7 +85,7 @@ EOS
         assert_equal(expected,actual)
 
         #multiple valid ma_filenames
-        seq_hash = MicroArrayHashBuilder.makeHash("valid_ma_dat1.txt","valid_ma_dat2.txt")
+        seq_hash = MicroArrayHashBuilder.makeHash("valid_ma_dat1.txt","valid_ma_dat2.txt",@loghandl)
         assert_not_nil(seq_hash)
         assert_equal(Hash,seq_hash.class)
         actual = seq_hash["F5BTJ3O01A06K0"]
@@ -114,22 +118,22 @@ EOS
 
         #single invalid ma_filename
         assert_raise ArgumentError do
-            MicroArrayHashBuilder.makeHash("an invalid filename")
+            MicroArrayHashBuilder.makeHash("an invalid filename",@loghandl)
         end
 
         #multiple invalid ma_filenames
         assert_raise ArgumentError do
-            MicroArrayHashBuilder.makeHash("an invalid filename","another invalid filename")
+            MicroArrayHashBuilder.makeHash("an invalid filename","another invalid filename",@loghandl)
         end
 
         #single file with invalid format
         assert_raise ArgumentError do
-            MicroArrayHashBuilder.makeHash("invalid_ma_dat.txt")
+            MicroArrayHashBuilder.makeHash("invalid_ma_dat.txt",@loghandl)
         end
 
        #mix valid and invalid file formats
        assert_raise ArgumentError do
-           MicroArrayHashBuilder.makeHash("valid_ma_dat1.txt","valid_ma_dat2.txt","invalid_ma_dat.txt")
+           MicroArrayHashBuilder.makeHash("valid_ma_dat1.txt","valid_ma_dat2.txt","invalid_ma_dat.txt",@loghandl)
        end
     end
 end

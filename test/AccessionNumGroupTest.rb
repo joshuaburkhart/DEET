@@ -6,7 +6,7 @@ require_relative '../lib/AccessionNumGroup'
 
 class AccessionNumGroupTest < Test::Unit::TestCase
     def setup
-        @log_filename = "#{Time.now}.testlog"
+        @log_filename = "#{Time.now.to_i}.testlog"
         @loghandl = File.open(@log_filename,"w")
     end
     def teardown

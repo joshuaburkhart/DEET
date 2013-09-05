@@ -16,8 +16,10 @@ EASTERN_OFFSET = (-5 * 3600)
 E_TIME = Time.now.localtime(EASTERN_OFFSET)
 START_TIME = Time.now
 MIN_SEQ_BP_LEN = 100
-result_filename = "#{START_TIME.to_i}.result"
-log_filename = "#{START_TIME.to_i}.log"
+OUT_DIR_NAME = "output/"
+%x(mkdir -p #{OUT_DIR_NAME})
+result_filename = "#{OUT_DIR_NAME}#{START_TIME.to_i}.result"
+log_filename = "#{OUT_DIR_NAME}#{START_TIME.to_i}.log"
 
 if(!E_TIME.saturday? && !E_TIME.sunday? && !(E_TIME.hour > 21))
     puts "Due to the intensive load this program may put on NCBI servers, this program should only be run on weekends or between the hours of 9pm and 5am."

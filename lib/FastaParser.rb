@@ -6,18 +6,19 @@ class FastaParser
     @min_len
     def initialize(fasta_filename,min_len,loghandl)
         if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
+            @loghandl = loghandl
             if(!fasta_filename.nil? && fasta_filename.class == String && File.exist?(fasta_filename))
                 if(!min_len.nil? && min_len.class == Fixnum && min_len > 0)
                     @fasta_filename = fasta_filename
                     @min_len = min_len
                 else
                     msg = "ERROR: min_len '#{min_len}' must be a positive whole number"
-                    loghandl.puts msg
+                    @loghandl.puts msg
                     raise(ArgumentError,msg)
                 end
             else
                 msg = "ERROR: File '#{fasta_filename}' not a valid file"
-                loghandl.puts msg
+                @loghandl.puts msg
                 raise(ArgumentError,msg)
             end
         else
@@ -38,7 +39,7 @@ class FastaParser
             @fasta_filehandl = File.open(@fasta_filename,"r")
         else
             msg = "File not specified"
-            loghandl.puts msg
+            @loghandl.puts msg
             raise(IOError,msg)
         end
     end
@@ -78,7 +79,7 @@ class FastaParser
             line = @fasta_filehandl.gets
             if(!line.match(RgxLib::FASTP_ID_GRAB) && !line.match(RgxLib::SEQ_BP_LIST))
                 msg = "ERROR: '#{line}' not valid fasta format"
-                loghandl.puts msg
+                @loghandl.puts msg
                 raise(ArgumentError,msg)
             end
         end

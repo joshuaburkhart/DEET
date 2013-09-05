@@ -12,8 +12,9 @@ class NCBIBlaster
     T_LIM = 10 * 60
     def initialize(loghandl)
         if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
+            @loghandl = loghandl
             msg = "INFO: NCBIBlaster initialized as '#{self.to_s}'"
-            loghandl.puts msg
+            @loghandl.puts msg
         else
             raise(ArgumentError,"ERROR: loghandl '#{loghandl}' not a valid file handle")
         end
@@ -32,7 +33,7 @@ class NCBIBlaster
             end
         else
             msg = "ERROR: put_response nil"
-            loghandl.puts msg
+            @loghandl.puts msg
             raise(ArgumentError,msg)
         end
         return blast_result
@@ -43,7 +44,7 @@ class NCBIBlaster
             if(text_result.match(RgxLib::BLST_NO_MATCH))
                 ncbi_result.valid = false
                 msg = "INFO: No match reported for #{seq.id}\n#{text_result}"
-                loghandl.puts msg
+                @loghandl.puts msg
             else
                 2.times {
                     text_result.match(RgxLib::BLST_ACCN_GRAB)
@@ -55,13 +56,13 @@ class NCBIBlaster
                         ncbi_result.addAlignment(align)
                     else
                         msg = "WARNING: Cannot parse alignment for #{seq.id}\n#{text_result}" 
-                        loghandl.puts msg
+                        @loghandl.puts msg
                     end
                 }
             end
         else
             msg = "ERROR: NCBIBlastResult cannot be build using nil objects"
-            loghandl.puts msg
+            @loghandl.puts msg
             raise(ArgumentError,msg)
         end
         return ncbi_result
@@ -134,10 +135,10 @@ class NCBIBlaster
            return res_text
         elsif(cur_t - start_t >= T_LIM)
             msg = "INFO: get request for #{res} exceeded time limit (#{T_LIM} seconds)"
-            loghandl.puts msg
+            @loghandl.puts msg
         else
             msg = "WARNING: unrecognized response for #{res} following get request\n#{get_result.body()}"
-            loghandl.puts msg
+            @loghandl.puts msg
         end
     end
     #pass method like self.method(:get)
@@ -159,12 +160,12 @@ class NCBIBlaster
                     retry
                 else
                     msg = "WARNING: Maximum retry attempts reached, unable to get results for #{params.join(', ')}"
-                    loghandl.puts msg
+                    @loghandl.puts msg
                 end 
             end 
         else
             msg = "wrong number of arguments (#{args_supplied} for #{args_required})"
-            loghandl.puts msg
+            @loghandl.puts msg
             raise(ArgumentError,msg)
         end 
     end

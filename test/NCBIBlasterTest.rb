@@ -37,12 +37,18 @@ Lambda      K        H
   0.318    0.134    0.401 
 Matrix: BLOSUM62
 EOS
+        @log_filename = "#{Time.now.to_i}.testlog"
+        @loghandl = File.open(@log_filename,"w")
+    end
+    def teardown
+        @loghandl.close
+        %x(rm #{@log_filename})
     end
     def testBuildBlastResult
         #both params valid
         seq = Sequence.new("valid-id","atcgATCG")
         text_result = @valid_text_result
-        blaster = NCBIBlaster.new
+        blaster = NCBIBlaster.new(@loghandl)
         actual = blaster.buildNCBIResult(text_result,seq)
         assert_not_nil(actual)
         expected = 2
@@ -54,14 +60,14 @@ EOS
         #result invalid
         seq = Sequence.new("valid-id","atcgATCG")
         text_result = @invalid_text_result
-        blaster = NCBIBlaster.new
+        blaster = NCBIBlaster.new(@loghandl)
         actual = blaster.buildNCBIResult(text_result,seq)
         assert(actual.valid == false)
 
         #sequence invalid
         seq = nil
         text_result = @valid_text_result
-        blaster = NCBIBlaster.new
+        blaster = NCBIBlaster.new(@loghandl)
         assert_raise ArgumentError do
             blaster.buildNCBIResult(text_result,seq)
         end
@@ -69,14 +75,14 @@ EOS
         #both params invalid
         seq = nil
         text_result = @invalid_text_result
-        blaster = NCBIBlaster.new
+        blaster = NCBIBlaster.new(@loghandl)
         assert_raise ArgumentError do
             blaster.buildNCBIResult(text_result,seq)
         end
     end
     def testSubmitTblastxQuery
         seq = Sequence.new("valid-id","atctagagagagagtttc")
-        blaster = NCBIBlaster.new
+        blaster = NCBIBlaster.new(@loghandl)
         sleep(1) #don't overload ncbi servers
         actual = blaster.submitTblastxQuery(seq)
         #sample return val (rid will vary)
@@ -89,7 +95,7 @@ EOS
     def testFetchTblastxResult
         #put_response valid
         seq = Sequence.new("valid-id","atctagagagagagtttc")
-        blaster = NCBIBlaster.new
+        blaster = NCBIBlaster.new(@loghandl)
         sleep(1) #don't overload ncbi servers
         put_response = blaster.submitTblastxQuery(seq)
         actual = blaster.fetchTblastxResult(put_response)
@@ -99,7 +105,7 @@ EOS
 
         #put_response real
         seq = Sequence.new("XM_001663206.1-sample","ATGCTATGCTATTCACTTCTAATACTAATTGATACCACCATCTTCTCTACTTCCAGCAATTCAGCTCAACCAGCGCCGTCTGTAAATAGCCACGACACACCGCAGAGCACGCGAAGTTCGGCGAATCCCAACAACAACCGTCTGCGAAGACTACGTTCTGCAAGTACTCAGTCGAGTTCGGCAACCAATTTGAACAGCGTCAACAACAACAACGCCAACCCGACCACTGGCTCCGGTGCCAACTCGAACAACAGCCGGCATCCCCCTAATCGCCATCGGACATCAGGAGCCACCGGAACAAGCACTGCAGCAAACACGGGTGGGATAATCTCAAGACTGGTTGACAGTAGTAGCCACGCAGCAGCAGCAGGAGCAGCGCCAGCAACGACGACGACGACTACGACCGGAAGCAACAATAACCGTGGGTCGCCGGGCCCACAGCGTGAATCTACCCCCGTTCGGAAGAAGG")
-        blaster = NCBIBlaster.new
+        blaster = NCBIBlaster.new(@loghandl)
         sleep(1) #don't overload ncbi servers
         put_response = blaster.submitTblastxQuery(seq)
         actual = blaster.fetchTblastxResult(put_response)
@@ -109,7 +115,7 @@ EOS
 
         #put_response invalid
         put_response = nil
-        blaster = NCBIBlaster.new
+        blaster = NCBIBlaster.new(@loghandl)
         assert_raise ArgumentError do
             blaster.fetchTblastxResult(put_response)
         end
