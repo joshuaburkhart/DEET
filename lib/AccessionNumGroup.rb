@@ -1,21 +1,27 @@
 require_relative 'RgxLib'
 require_relative 'Sequence'
+require_relative 'AnnotFinder'
 
 class AccessionNumGroup
     @acc_num
     @expr_sig_len
     @paralogs
-    def initialize(acc_num,expr_sig_len)
-        if(!acc_num.nil? && acc_num.class == String && acc_num.match(RgxLib::ALGN_ACC_NUM))
-            if(!expr_sig_len.nil? && expr_sig_len.class == Fixnum && expr_sig_len > 0)
-                @acc_num = acc_num
-                @expr_sig_len = expr_sig_len
-                @paralogs = Hash.new
+    def initialize(acc_num,expr_sig_len,loghandl)
+        if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
+            @loghandl = loghandl
+            if(!acc_num.nil? && acc_num.class == String && acc_num.match(RgxLib::ALGN_ACC_NUM))
+                if(!expr_sig_len.nil? && expr_sig_len.class == Fixnum && expr_sig_len > 0)
+                    @acc_num = acc_num
+                    @expr_sig_len = expr_sig_len
+                    @paralogs = Hash.new
+                else
+                    raise(ArgumentError,"ERROR: expr_sig_len '#{expr_sig_len}' not a valid length")
+                end
             else
-                raise(ArgumentError,"ERROR: expr_sig_len '#{expr_sig_len}' not a valid length")
+                raise(ArgumentError,"ERROR: acc_num '#{acc_num}' not a valid accession number")
             end
         else
-            raise(ArgumentError,"ERROR: acc_num '#{acc_num}' not a valid accession number")
+            raise(ArgumentError,"ERROR: loghandl '#{loghandl}' not a valid file handle")
         end
     end
     def addRes(res,expr_sig)
@@ -78,11 +84,12 @@ class AccessionNumGroup
         end
     end
     def to_s
+        annot_finder = AnnotFinder.new(@acc_num,@loghandl)
         gene_expr_sig = getGeneExprSig
         best_gene_rep = getRepresentativeSeq(gene_expr_sig)
         best_gene_ncbi_res = getRepresentativeRes(gene_expr_sig)
         string_rep =<<EOS
-GENE: #{@acc_num}
+GENE: #{@acc_num}, LOCUS TAG = #{annot_finder.getLocusTag}, NAME = #{annot_finder.getName}
 ======#{'='*@acc_num.length}
 \tSIGNATURE: #{gene_expr_sig}
 \tBEST REPRESENTATIVE SEQUENCE ID: #{best_gene_rep.id}

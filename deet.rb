@@ -158,7 +158,7 @@ ncbi_blast_results.each {|ncbi_res|
     if(ncbi_res.hasAlignments?)
         acc_num = ncbi_res.bestAlignment.accession_num
         if(acc_num_groups[acc_num].nil?)
-            acc_num_groups[acc_num] = AccessionNumGroup.new(acc_num,expr_sig_len)
+            acc_num_groups[acc_num] = AccessionNumGroup.new(acc_num,expr_sig_len,loghandl)
         end
         seq_id = ncbi_res.sequence.id
         expr_sig = seq_hash[seq_id]

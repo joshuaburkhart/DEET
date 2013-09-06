@@ -17,28 +17,28 @@ class AccessionNumGroupTest < Test::Unit::TestCase
         #both params valid
         acc_num = "XM_512.4"
         expr_sig_len = 8
-        actual = AccessionNumGroup.new(acc_num,expr_sig_len)
+        actual = AccessionNumGroup.new(acc_num,expr_sig_len,@loghandl)
         assert_not_nil(actual)
 
         #acc_num invalid
         acc_num = "XM_512.4 other strings"
         expr_sig_len = 8
         assert_raise ArgumentError do
-            AccessionNumGroup.new(acc_num,expr_sig_len)
+            AccessionNumGroup.new(acc_num,expr_sig_len,@loghandl)
         end
 
         #expr_sig_len invalid
         acc_num = "XM_512.4"
         expr_sig_len = "string"
         assert_raise ArgumentError do
-            AccessionNumGroup.new(acc_num,expr_sig_len)
+            AccessionNumGroup.new(acc_num,expr_sig_len,@loghandl)
         end
 
         #both params invalid
         acc_num = "XM_512.4 other strings"
         expr_sig_len = "string"
         assert_raise ArgumentError do
-            AccessionNumGroup.new(acc_num,expr_sig_len)
+            AccessionNumGroup.new(acc_num,expr_sig_len,@loghandl)
         end
     end
     def testAddRes
@@ -47,7 +47,7 @@ class AccessionNumGroupTest < Test::Unit::TestCase
         res = NCBIBlastResult.new(seq)
         expr_sig = "100111010"
         acc_num = "AG_123.4"
-        acc_num_grp = AccessionNumGroup.new(acc_num,expr_sig.length)
+        acc_num_grp = AccessionNumGroup.new(acc_num,expr_sig.length,@loghandl)
         assert_raise ArgumentError do
             acc_num_grp.addRes(res,expr_sig)
         end
@@ -67,7 +67,7 @@ class AccessionNumGroupTest < Test::Unit::TestCase
         res.addAlignment(alignment2)
 
         expr_sig = "100111010"
-        acc_num_grp = AccessionNumGroup.new(res.bestAlignment.accession_num,expr_sig.length)
+        acc_num_grp = AccessionNumGroup.new(res.bestAlignment.accession_num,expr_sig.length,@loghandl)
         acc_num_grp.addRes(res,expr_sig)
         assert_equal(seq,acc_num_grp.getRepresentativeSeq(expr_sig))
         assert_equal(0,acc_num_grp.getParalogExprSigs.length)
@@ -101,7 +101,7 @@ class AccessionNumGroupTest < Test::Unit::TestCase
         res2.addAlignment(alignment4)
 
         expr_sig = "100111010"
-        acc_num_grp = AccessionNumGroup.new(res1.bestAlignment.accession_num,expr_sig.length)
+        acc_num_grp = AccessionNumGroup.new(res1.bestAlignment.accession_num,expr_sig.length,@loghandl)
         acc_num_grp.addRes(res1,expr_sig)
         acc_num_grp.addRes(res2,expr_sig)
         assert_equal(seq1,acc_num_grp.getRepresentativeSeq(expr_sig))
@@ -156,7 +156,7 @@ class AccessionNumGroupTest < Test::Unit::TestCase
         res4.addAlignment(alignment8)
 
         expr_sig2 = "111111010"
-        acc_num_grp = AccessionNumGroup.new(res1.bestAlignment.accession_num,expr_sig1.length)
+        acc_num_grp = AccessionNumGroup.new(res1.bestAlignment.accession_num,expr_sig1.length,@loghandl)
         acc_num_grp.addRes(res1,expr_sig1)
         acc_num_grp.addRes(res2,expr_sig1)
         acc_num_grp.addRes(res3,expr_sig2)
@@ -206,7 +206,7 @@ class AccessionNumGroupTest < Test::Unit::TestCase
         res4.addAlignment(alignment8)
 
         expr_sig2 = "111111010"
-        acc_num_grp = AccessionNumGroup.new(res1.bestAlignment.accession_num,expr_sig1.length)
+        acc_num_grp = AccessionNumGroup.new(res1.bestAlignment.accession_num,expr_sig1.length,@loghandl)
         acc_num_grp.addRes(res1,expr_sig1)
         acc_num_grp.addRes(res2,expr_sig1)
         assert_raise ArgumentError do

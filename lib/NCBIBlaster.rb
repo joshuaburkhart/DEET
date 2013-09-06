@@ -4,6 +4,7 @@ require_relative 'Alignment'
 require_relative 'NCBIBlastResult'
 
 class NCBIBlaster
+    DB = "refseq_mrna" #http://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=ProgSelectionGuide
     CONNECTION_EXCEPTIONS = [Errno::ECONNRESET,Timeout::Error,EOFError]
     NCBI_URI = URI('http://www.ncbi.nlm.nih.gov/blast/Blast.cgi')
     PutResponse = Struct.new(:rid,:seq)
@@ -71,7 +72,7 @@ class NCBIBlaster
     def put(seq)
         put_params = {
             :QUERY => seq.bp_list,
-            :DATABASE => "nr",
+            :DATABASE => DB,
             :HITLIST_SIZE => 10,
             :FILTER => 'L',
             :EXPECT => 10,
