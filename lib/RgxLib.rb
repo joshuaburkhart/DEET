@@ -17,6 +17,6 @@ module RgxLib
     MAHB_Q_VAL_GRAB = /^[FC][0-9A-Z:]+\s+-?[0-9.]+(e-)?([0-9]+)?\s+-?[0-9.]+(e-)?([0-9]+)?\s+-?[0-9.]+(e-)?([0-9]+)?\s+-?[0-9.]+(e-)?([0-9]+)?\s+(-?[0-9.]+(e-)?([0-9]+)?).+$/
     MAHB_M_VAL_GRAB = /^[FC][0-9A-Z:]+\s+(-?[0-9.]+(e-)?([0-9]+)?).+$/
     FASTP_ID_GRAB = /^>(\w+).*$/
-    ANNOT_LT_GRAB = /<dt>Locus tag<\/dt>\n.+<dd>(.+)<\/dd>/
+    ANNOT_LT_GRAB = /<dd.*?>([a-zA-Z0-9_-]+)<.*?\/dd>/
     ANNOT_NM_GRAB = /<dt>Names<\/dt>\n.+<dd>(.+)<\/dd>/
 end
