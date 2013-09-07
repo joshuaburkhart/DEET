@@ -75,13 +75,26 @@ Example: ruby deet.rb -f input_files/fastas/singletons.self.remained.fna -m inpu
 }
 optparse.parse!
 
+loghandl = File.open(log_filename,"w")
+msg = "INFO: Execution #{START_TIME.to_i} started"
 if(options[:fasta_files].nil?)
-    raise(ArgumentError,"ERROR: no FASTA files supplied")
-elsif(options[:ma_files].nil?)
-    raise(ArgumentError,"ERROR: no MA files supplied")
+    msg = "ERROR: no FASTA files supplied"
+    loghandl.puts msg
+    raise(ArgumentError,msg)
+else
+    msg = "INFO: below FASTA files supplied\n#{options[:fasta_files].join("\n")}"
+    loghandl.puts msg
+end
+if(options[:ma_files].nil?)
+    msg = "ERROR: no MA files supplied"
+    loghandl.puts msg
+    raise(ArgumentError,msg)
+else
+    msg = "INFO: below MA files supplied (order maintained in expression signatures)\n#{options[:ma_files].join("\n")}"
+    loghandl.puts msg
 end
 
-loghandl = File.open(log_filename,"w")
+loghandl.puts msg
 puts "hashing microarray data..."
 seq_hash = MicroArrayHashBuilder.makeHash(*options[:ma_files],loghandl)
 puts "microarray data hashed"
