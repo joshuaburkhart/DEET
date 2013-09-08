@@ -1,8 +1,7 @@
 require_relative 'RgxLib'
 
 class MicroArrayHashBuilder
-    QLIM = 0.05
-    def self.makeHash(*ma_filenames,loghandl)
+    def self.makeHash(*ma_filenames,q_lim=0.05,loghandl)
         if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
             @loghandl = loghandl
             if(!ma_filenames.nil? && ma_filenames.class == Array && ma_filenames.length > 0)
@@ -24,7 +23,7 @@ class MicroArrayHashBuilder
                             line.match(RgxLib::MAHB_Q_VAL_GRAB)
                             q_val = Float($9)
                             sig_sample = "X" #not significant
-                            if(q_val < QLIM)
+                            if(q_val < q_lim)
                                 line.match(RgxLib::MAHB_M_VAL_GRAB)
                                 m_val = Float($1)
                                 sig_sample = m_val > 0 ? "1" : "0"

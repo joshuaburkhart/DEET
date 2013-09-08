@@ -2,17 +2,30 @@ require_relative 'RgxLib'
 class Sequence
     attr_accessor :id
     attr_accessor :bp_list
+
+    attr_accessor :name
+    attr_accessor :locus_tag
+    attr_accessor :acc_num
+    attr_accessor :best_rep
+    attr_accessor :expr_sig
+
+    attr_accessor :ignored
+    attr_accessor :orphan
+    attr_accessor :paralog_num
     def initialize(id,bp_list)
         if(id.match(RgxLib::SEQ_ID))
-           @id = $1
+            @id = $1
         else
             raise(ArgumentError, "Sequence could not be initialized with non-compliant id '#{id}'.")
         end
         if(bp_list.match(RgxLib::SEQ_BP_LIST))
-        @bp_list = $1
+            @bp_list = $1
         else
             raise(ArgumentError, "Sequence could not be initialized with non-compliant bp_list '#{bp_list}'")
         end
+        @ignored = true
+        @orphan   = false
+        @paralog_num = 0
     end
     def nil?
         return @id.nil? || @bp_list.nil?
@@ -22,5 +35,22 @@ class Sequence
     end
     def hash
         return (@id.hash)
+    end
+    def getStatus
+        status = nil
+        if(@ignored)
+            status = 0
+        elsif(@orphan)
+            status = 1
+        elsif(!@best_rep.nil? && @paralog_num == 0)
+            status = 2
+        elsif(@paralog.nil?)
+            status = 3
+        end
+        return status
+    end
+    def to_s
+        row = "#{@id}\t#{getStatus}\t#{@name}\t#{@locus_tag}\t#{@acc_num}\t#{@paralog_num}\t#{@expr_sig}"
+        return row
     end
 end

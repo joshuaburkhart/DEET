@@ -12,16 +12,24 @@ require_relative 'lib/FastaParser'
 require_relative 'lib/MicroArrayHashBuilder'
 require_relative 'lib/RgxLib'
 
-EASTERN_OFFSET = (-5 * 3600)
-E_TIME = Time.now.localtime(EASTERN_OFFSET)
 START_TIME = Time.now
-MIN_SEQ_BP_LEN = 100
-OUT_DIR_NAME = "output/"
-%x(mkdir -p #{OUT_DIR_NAME})
-result_filename = "#{OUT_DIR_NAME}#{START_TIME.to_i}.result"
-log_filename = "#{OUT_DIR_NAME}#{START_TIME.to_i}.log"
+EST_OFFSET = (-5 * 3600)
+EX_ID      = START_TIME.to_i
+EST_TIME   = Time.now.localtime(EST_OFFSET)
 
-if(!E_TIME.saturday? && !E_TIME.sunday? && !(E_TIME.hour > 21))
+Q_LIM        = 0.05
+E_LIM        = 1.0e-5
+MIN_SEQ_LEN  = 100
+
+OUT_DIR_NAME = "output/"
+
+%x(mkdir -p #{OUT_DIR_NAME})
+outfile_prefix  = "#{OUT_DIR_NAME}#{EX_ID}"
+result_filename = "#{outfile_prefix}.result"
+seq_filename   = "#{outfile_prefix}.seqs"
+log_filename    = "#{outfile_prefix}.log"
+
+if(!EST_TIME.saturday? && !EST_TIME.sunday? && !(EST_TIME.hour > 21))
     puts "Due to the intensive load this program may put on NCBI servers, this program should only be run on weekends or between the hours of 9pm and 5am."
     puts "Choose One:"
     puts "w - wait for next eligible execution time, then run automatically"
@@ -32,13 +40,13 @@ if(!E_TIME.saturday? && !E_TIME.sunday? && !(E_TIME.hour > 21))
     if(!answer.nil? && answer.class == String && answer.length == 1 && answer.match(/[war]/))
         if(answer == "w")
             num_minutes = 0
-            t = Time.now.localtime(EASTERN_OFFSET)
+            t = Time.now.localtime(EST_OFFSET)
             puts "waiting..."
             while(!t.saturday? && !t.sunday? && !(t.hour > 21))
                 print "."
                 $stdout.flush
                 sleep(600) #10 minutes
-                t = Time.now.localtime(EASTERN_OFFSET)
+                t = Time.now.localtime(EST_OFFSET)
             end         
             puts "beginning execution after #{num_minutes} minute wait..."
             run = true
@@ -76,7 +84,7 @@ Example: ruby deet.rb -f input_files/fastas/singletons.self.remained.fna -m inpu
 optparse.parse!
 
 loghandl = File.open(log_filename,"w")
-msg = "INFO: Execution #{START_TIME.to_i} started"
+msg = "INFO: Execution #{EX_ID} started"
 if(options[:fasta_files].nil?)
     msg = "ERROR: no FASTA files supplied"
     loghandl.puts msg
@@ -94,27 +102,34 @@ else
     loghandl.puts msg
 end
 
-loghandl.puts msg
 puts "hashing microarray data..."
-seq_hash = MicroArrayHashBuilder.makeHash(*options[:ma_files],loghandl)
+seq_hash = MicroArrayHashBuilder.makeHash(*options[:ma_files],Q_LIM,loghandl)
 puts "microarray data hashed"
 puts "======================"
 
+seqhandl = File.open(seq_filename,"w")
 seqs = Set.new
+seq_count = 0
 options[:fasta_files].each {|fasta_file|
     puts "loading #{fasta_file}..."
-    parser = FastaParser.new(fasta_file,MIN_SEQ_BP_LEN,loghandl)
+    parser = FastaParser.new(fasta_file,loghandl)
     parser.open
     while(next_seq = parser.nextSeq)
-        seqs << next_seq
-        print "."
+        if(next_seq.bp_list.length > MIN_SEQ_LEN)
+            seqs << next_seq
+            print "."
+        else
+            seqhandl.puts next_seq
+            print "x"
+        end
         $stdout.flush
+        seq_count += 1
     end
     parser.close
 }
 puts
-puts "fasta files loaded. (#{seqs.length} total sequences)"
-puts "=================================================="
+puts "fasta files loaded. (#{seqs.length} / #{seq_count} sequences > #{MIN_SEQ_LEN})"
+puts "=====================#{'='*seqs.length.to_s.length}===#{'='*seq_count.to_s.length}=============#{'='*MIN_SEQ_LEN.to_s.length}=" 
 
 puts "querying ncbi..."
 blaster = NCBIBlaster.new(loghandl)
@@ -182,15 +197,20 @@ puts
 puts "sequences grouped by accession number and expression signature"
 puts "=============================================================="
 
-puts "writing results to #{result_filename}..."
+puts "writing results..."
 resulthandl = File.open(result_filename,"w")
 acc_num_groups.values.each {|acc_num_group|
     print "."
     $stdout.flush
+    seqhandl.puts(acc_num_group.repSeqDat)
     resulthandl.puts(acc_num_group.to_s)
     resulthandl.puts
 }
 puts
 resulthandl.close
+seqhandl.close
 loghandl.close
+puts "result file: #{result_filename}"
+puts "seq file: #{seq_filename}"
+puts "log file: #{log_filename}"
 puts "done."
