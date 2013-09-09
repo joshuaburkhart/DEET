@@ -23,8 +23,13 @@ class Sequence
         else
             raise(ArgumentError, "Sequence could not be initialized with non-compliant bp_list '#{bp_list}'")
         end
-        @ignored = true
-        @orphan   = false
+        @name        = "N/A"
+        @locus_tag   = "N/A"
+        @acc_num     = "N/A"
+        @best_rep    = "N/A"
+        @expr_sig    = "N/A"
+        @ignored     = true
+        @orphan      = false
         @paralog_num = 0
     end
     def nil?
@@ -50,7 +55,7 @@ class Sequence
         return status
     end
     def to_s
-        row = "#{@id}\t#{getStatus}\t#{@name}\t#{@locus_tag}\t#{@acc_num}\t#{@paralog_num}\t#{@expr_sig}"
+        row = "#{@id},#{getStatus},#{@name},#{@locus_tag},#{@acc_num},#{@paralog_num},#{@expr_sig}\n"
         return row
     end
 end

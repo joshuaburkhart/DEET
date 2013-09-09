@@ -3,6 +3,8 @@ require_relative 'RgxLib'
 
 class AnnotFinder
     NCBI_GENE_URI = URI('http://www.ncbi.nlm.nih.gov/gene')
+    @name
+    @locus_tag
     def initialize(acc_num,loghandl)
         if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
             @loghandl = loghandl
@@ -17,41 +19,47 @@ class AnnotFinder
         end
     end
     def getLocusTag
-        if(!@annot_page.nil?)
-            ans = nil
-            @annot_page.body().match(RgxLib::ANNOT_LT_GRAB)
-            locusTag = $1
-            if(!locusTag.nil? && locusTag != "")
-                ans = locusTag
+        if(@locus_tag.nil?)
+            if(!@annot_page.nil?)
+                ans = nil
+                @annot_page.body().match(RgxLib::ANNOT_LT_GRAB)
+                locusTag = $1
+                if(!locusTag.nil? && locusTag != "")
+                    ans = locusTag
+                else
+                    msg = "ERROR: Locus tag for #{@acc_num} not found in annotation page\n#{@annot_page.body()}"
+                    @loghandl.puts msg
+                    ans = "EMPTY! (see log file '#{@loghandl.path}' for details)"
+                end
+                @locus_tag = ans
             else
-                msg = "ERROR: Locus tag for #{@acc_num} not found in annotation page\n#{@annot_page.body()}"
+                msg = "ERROR: annotation page not set"
                 @loghandl.puts msg
-                ans = "EMPTY! (see log file '#{@loghandl.path}' for details)"
+                raise(StandardError,msg)
             end
-            return ans
-        else
-            msg = "ERROR: annotation page not set"
-            @loghandl.puts msg
-            raise(StandardError,msg)
         end
+        return @locus_tag
     end
     def getName
-        if(!@annot_page.nil?)
-            ans = nil
-            @annot_page.body().match(RgxLib::ANNOT_NM_GRAB)
-            name = $1
-            if(!name.nil? && name != "")
-                ans = name
+        if(@name.nil?)
+            if(!@annot_page.nil?)
+                ans = nil
+                @annot_page.body().match(RgxLib::ANNOT_NM_GRAB)
+                name = $1
+                if(!name.nil? && name != "")
+                    ans = name
+                else
+                    msg = "ERROR: name for #{@acc_num} not found in annotation page\n#{@annot_page.body()}"
+                    @loghandl.puts msg
+                    ans = "EMPTY! (see log file '#{@loghandl.path}' for details)"
+                end
+                @name = ans
             else
-                msg = "ERROR: name for #{@acc_num} not found in annotation page\n#{@annot_page.body()}"
+                msg = "ERROR: annotation page not set"
                 @loghandl.puts msg
-                ans = "EMPTY! (see log file '#{@loghandl.path}' for details)"
+                raise(StandardError,msg)
             end
-            return ans
-        else
-            msg = "ERROR: annotation page not set"
-            @loghandl.puts msg
-            raise(StandardError,msg)
         end
+        return @name
     end
 end

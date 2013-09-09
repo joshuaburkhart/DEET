@@ -30,7 +30,13 @@ class NCBIBlaster
                 text_result = webCall(self.method(:get),TEXT,put_response)
                 if(!text_result.nil?)
                     blast_result = buildNCBIResult(text_result,put_response.seq)
+                else
+                    msg = "WARNING: text_result nil for put_response '#{put_response}'"
+                    @loghandl.puts msg
                 end
+            else
+                msg = "WARNING: seq nil for put_response '#{put_response}'"
+                @loghandl.puts msg
             end
         else
             msg = "ERROR: put_response nil"
@@ -40,6 +46,7 @@ class NCBIBlaster
         return blast_result
     end
     def buildNCBIResult(text_result,seq)
+        ncbi_result = nil
         if(!seq.nil? && !text_result.nil?)
             ncbi_result = NCBIBlastResult.new(seq)
             if(text_result.match(RgxLib::BLST_NO_MATCH))

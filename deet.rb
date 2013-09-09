@@ -22,6 +22,7 @@ E_LIM        = 1.0e-5
 MIN_SEQ_LEN  = 100
 
 OUT_DIR_NAME = "output/"
+SEQ_HEADER = "ID,Status,Name,Locus Tag,NCBI Acc #,Paralog #,Expr Sig"
 
 %x(mkdir -p #{OUT_DIR_NAME})
 outfile_prefix  = "#{OUT_DIR_NAME}#{EX_ID}"
@@ -108,6 +109,7 @@ puts "microarray data hashed"
 puts "======================"
 
 seqhandl = File.open(seq_filename,"w")
+seqhandl.puts SEQ_HEADER
 seqs = Set.new
 seq_count = 0
 options[:fasta_files].each {|fasta_file|
@@ -191,6 +193,12 @@ ncbi_blast_results.each {|ncbi_res|
         seq_id = ncbi_res.sequence.id
         expr_sig = seq_hash[seq_id]
         acc_num_groups[acc_num].addRes(ncbi_res,expr_sig)
+    else
+        cur_seq = ncbi_res.sequence
+        cur_seq.expr_sig = seq_hash[cur_seq.id]
+        cur_seq.ignored = false
+        cur_seq.orphan = true
+        seqhandl.puts cur_seq.to_s
     end
 }
 puts
@@ -202,7 +210,7 @@ resulthandl = File.open(result_filename,"w")
 acc_num_groups.values.each {|acc_num_group|
     print "."
     $stdout.flush
-    seqhandl.puts(acc_num_group.repSeqDat)
+    seqhandl.puts(acc_num_group.repSeqDat(E_LIM))
     resulthandl.puts(acc_num_group.to_s)
     resulthandl.puts
 }

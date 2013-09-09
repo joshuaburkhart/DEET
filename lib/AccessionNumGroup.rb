@@ -6,6 +6,7 @@ class AccessionNumGroup
     @acc_num
     @expr_sig_len
     @paralogs
+    @annot_finder
     def initialize(acc_num,expr_sig_len,loghandl)
         if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
             @loghandl = loghandl
@@ -14,6 +15,7 @@ class AccessionNumGroup
                     @acc_num = acc_num
                     @expr_sig_len = expr_sig_len
                     @paralogs = Hash.new
+                    @annot_finder = AnnotFinder.new(@acc_num,@loghandl)
                 else
                     raise(ArgumentError,"ERROR: expr_sig_len '#{expr_sig_len}' not a valid length")
                 end
@@ -83,13 +85,42 @@ class AccessionNumGroup
             raise(ArgumentError,"ERROR: ncbi_res_ary '#{ncbi_res_ary}' not a valid array")
         end
     end
+    def repSeqDat(e_lim)
+        seq_dat = ""
+        #gene
+        gene_expr_sig = getGeneExprSig
+        best_gene_rep = getRepresentativeSeq(gene_expr_sig)
+        best_gene_ncbi_res = getRepresentativeRes(gene_expr_sig)
+        best_gene_rep.name = @annot_finder.getName
+        best_gene_rep.locus_tag = @annot_finder.getLocusTag
+        best_gene_rep.best_rep = @acc_num
+        best_gene_rep.expr_sig = gene_expr_sig
+        best_gene_rep.ignored = false
+        best_gene_rep.orphan = best_gene_ncbi_res.bestAlignment.e_value < e_lim ? false : true
+        best_gene_rep.paralog_num = 0
+        seq_dat += best_gene_rep.to_s
+
+        #paralogs
+        getParalogExprSigs.each_with_index {|psig,i|
+            best_paralog_rep = getRepresentativeSeq(psig)
+            best_paralog_ncbi_res = getRepresentativeRes(psig)
+            best_paralog_rep.name = @annot_finder.getName
+            best_paralog_rep.locus_tag = @annot_finder.getLocusTag
+            best_paralog_rep.best_rep = @acc_num
+            best_paralog_rep.expr_sig = psig
+            best_paralog_rep.ignored = false
+            best_paralog_rep.orphan = best_gene_ncbi_res.bestAlignment.e_value < e_lim ? false : true
+            best_paralog_rep.paralog_num = i
+            seq_dat += best_paralog_rep.to_s
+        }
+        return seq_dat
+    end
     def to_s
-        annot_finder = AnnotFinder.new(@acc_num,@loghandl)
         gene_expr_sig = getGeneExprSig
         best_gene_rep = getRepresentativeSeq(gene_expr_sig)
         best_gene_ncbi_res = getRepresentativeRes(gene_expr_sig)
         string_rep =<<EOS
-GENE: #{@acc_num}, LOCUS TAG = #{annot_finder.getLocusTag}, NAME = #{annot_finder.getName}
+GENE: #{@acc_num}, LOCUS TAG = #{@annot_finder.getLocusTag}, NAME = #{@annot_finder.getName}
 ======#{'='*@acc_num.length}
 \tSIGNATURE: #{gene_expr_sig}
 \tBEST REPRESENTATIVE SEQUENCE ID: #{best_gene_rep.id}
