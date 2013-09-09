@@ -6,7 +6,6 @@ class Sequence
     attr_accessor :name
     attr_accessor :locus_tag
     attr_accessor :acc_num
-    attr_accessor :best_rep
     attr_accessor :expr_sig
 
     attr_accessor :ignored
@@ -25,8 +24,6 @@ class Sequence
         end
         @name        = "N/A"
         @locus_tag   = "N/A"
-        @acc_num     = "N/A"
-        @best_rep    = "N/A"
         @expr_sig    = "N/A"
         @ignored     = true
         @orphan      = false
@@ -47,7 +44,7 @@ class Sequence
             status = 0
         elsif(@orphan)
             status = 1
-        elsif(!@best_rep.nil? && @paralog_num == 0)
+        elsif(!@acc_num.nil? && @paralog_num == 0)
             status = 2
         elsif(@paralog.nil?)
             status = 3
@@ -55,7 +52,7 @@ class Sequence
         return status
     end
     def to_s
-        row = "#{@id},#{getStatus},#{@name},#{@locus_tag},#{@acc_num},#{@paralog_num},#{@expr_sig}\n"
+        row = "#{@id}~#{getStatus}~#{@name}~#{@locus_tag}~#{@acc_num}~#{@paralog_num}~#{@expr_sig}\n"
         return row
     end
 end

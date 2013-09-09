@@ -93,7 +93,7 @@ class AccessionNumGroup
         best_gene_ncbi_res = getRepresentativeRes(gene_expr_sig)
         best_gene_rep.name = @annot_finder.getName
         best_gene_rep.locus_tag = @annot_finder.getLocusTag
-        best_gene_rep.best_rep = @acc_num
+        best_gene_rep.acc_num = @acc_num
         best_gene_rep.expr_sig = gene_expr_sig
         best_gene_rep.ignored = false
         best_gene_rep.orphan = best_gene_ncbi_res.bestAlignment.e_value < e_lim ? false : true
@@ -106,7 +106,7 @@ class AccessionNumGroup
             best_paralog_ncbi_res = getRepresentativeRes(psig)
             best_paralog_rep.name = @annot_finder.getName
             best_paralog_rep.locus_tag = @annot_finder.getLocusTag
-            best_paralog_rep.best_rep = @acc_num
+            best_paralog_rep.acc_num = @acc_num
             best_paralog_rep.expr_sig = psig
             best_paralog_rep.ignored = false
             best_paralog_rep.orphan = best_gene_ncbi_res.bestAlignment.e_value < e_lim ? false : true
