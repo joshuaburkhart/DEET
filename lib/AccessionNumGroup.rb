@@ -110,7 +110,7 @@ class AccessionNumGroup
             best_paralog_rep.expr_sig = psig
             best_paralog_rep.ignored = false
             best_paralog_rep.orphan = best_gene_ncbi_res.bestAlignment.e_value < e_lim ? false : true
-            best_paralog_rep.paralog_num = i
+            best_paralog_rep.paralog_num = (i + 1)
             seq_dat += best_paralog_rep.to_s
         }
         return seq_dat
