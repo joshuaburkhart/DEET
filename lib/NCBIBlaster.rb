@@ -92,6 +92,7 @@ class NCBIBlaster
             :CMD => "Put",
         }
         put_result = nil
+        put_tries = 0
         begin
             NCBI_URI.query = URI.encode_www_form(put_params)
             put_result = Net::HTTP.get_response(NCBI_URI)
@@ -106,7 +107,12 @@ class NCBIBlaster
                 puts "RID not returned. Retrying..."
                 sleep(60)
             end
-        end while(!put_result.body().match(RgxLib::BLST_RID_GRAB))
+            put_tries += 1
+        end while(!put_result.body().match(RgxLib::BLST_RID_GRAB) && put_tries < 3)
+        msg = "WARNING: couldn't parse RID from put response.\n#{put_result.body()}"
+        @loghandl.puts msg
+        puts msg
+        return nil
     end
     private
     def get(format,res)

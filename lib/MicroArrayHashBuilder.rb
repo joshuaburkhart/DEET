@@ -4,6 +4,9 @@ class MicroArrayHashBuilder
     def self.makeHash(*ma_filenames,q_lim,loghandl)
         if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
             @loghandl = loghandl
+            msg = "Hashing microarray data..."
+            @loghandl.puts msg
+            puts msg
             if(!q_lim.nil? && q_lim.class == Float && q_lim > 0.0)
                 if(!ma_filenames.nil? && ma_filenames.class == Array && ma_filenames.length > 0)
                     ma_filenames.each {|f|
@@ -35,11 +38,17 @@ class MicroArrayHashBuilder
                                 seq_sigs[seq_id] << sig_sample
                             end
                         else
-                            msg = "ERROR: file '#{f}' do not have a valid MA header"
+                            msg = "ERROR: file '#{f}' does not have a valid MA header.\n#{header}"
                             @loghandl.puts msg
                             raise(ArgumentError,msg)
                         end
                     }
+                    msg = "Microarray data hashed"
+                    @loghandl.puts msg 
+                    puts msg 
+                    msg = "======================"
+                    @loghandl.puts msg 
+                    puts msg
                     return seq_sigs
                 else
                     msg = "ERROR: ma_filenames '#{ma_filenames}' not a valid array of filenames"

@@ -10,6 +10,7 @@ require_relative 'lib/NCBIBlaster'
 require_relative 'lib/AccessionNumGroup'
 require_relative 'lib/FastaParser'
 require_relative 'lib/MicroArrayHashBuilder'
+require_relative 'lib/RNAseqHashBuilder'
 require_relative 'lib/RgxLib'
 
 START_TIME = Time.now
@@ -17,7 +18,8 @@ EST_OFFSET = (-5 * 3600)
 EX_ID      = START_TIME.to_i
 EST_TIME   = Time.now.localtime(EST_OFFSET)
 
-Q_LIM        = 0.05
+Q_LIM        = 0.05 #for microarray
+P_ADJ_LIM    = 0.05 #for rna seq
 E_LIM        = 1.0e-5
 MIN_SEQ_LEN  = 100
 
@@ -74,9 +76,7 @@ end
 options = {}
 optparse = OptionParser.new { |opts|
     opts.banner = <<-EOS
-Usage: ruby deet.rb -f <fasta file 1> ... <fasta file n> -m <ma file 1> ... <ma file n>
-
-Example: ruby deet.rb -f input_files/fastas/singletons.self.remained.fna -m input_files/mas/photoperiod/limma.KCLD10-KCLD22.gene.de.txt,input_files/mas/photoperiod/limma.KCLD22-KCSD22.gene.de.txt,input_files/mas/photoperiod/limma.KCSD10-KCLD10.gene.de.txt,input_files/mas/photoperiod/limma.KCSD22-KCSD10.gene.de.txt,input_files/mas/photoperiod/limma.PBLD10-KCLD10.gene.de.txt,input_files/mas/photoperiod/limma.PBLD10-PBLD22.gene.de.txt,input_files/mas/photoperiod/limma.PBLD22-KCLD22.gene.de.txt,input_files/mas/photoperiod/limma.PBSD10-KCSD10.gene.de.txt,input_files/mas/photoperiod/limma.PBSD10-PBLD10.gene.de.txt,input_files/mas/photoperiod/limma.PBSD22-KCSD22.gene.de.txt,input_files/mas/photoperiod/limma.PBSD22-PBLD22.gene.de.txt,input_files/mas/photoperiod/limma.PBSD22-PBSD10.gene.de.txt
+Usage: ruby deet.rb -f <fasta file 1> ... <fasta file n> -m <dir containing only ma files>
     EOS
     opts.on('-h','--help','Display this screen'){
         puts opts
@@ -85,79 +85,128 @@ Example: ruby deet.rb -f input_files/fastas/singletons.self.remained.fna -m inpu
     options[:fasta_files] = nil
     opts.on('-f','--fastas FASTA_FILE1,FASTA_FILE2',Array,'FASTA files') { |fasta_files|
         options[:fasta_files] = fasta_files
-        msg = "Accepted -f '#{options[:fasta_files]}' as argument."
-        loghandl.puts msg
-        puts msg
     }
     options[:ma_files] = nil
-    opts.on('-m','--mas MA_FILE1,MA_FILE2',Array,'MA files') { |ma_files|
-        options[:ma_files] = ma_files
-        msg = "Accepted -m '#{options[:ma_files]}' as argument."
-        loghandl.puts msg
-        puts msg
+    opts.on('-m','--mad MA_DIR','Directory containing only valid MA files') { |mad|
+        options[:ma_files] = Array.new
+        Dir.entries(mad).each {|file|
+            if(file != "." && file != "..")
+                options[:ma_files] << "#{mad}/#{file}"
+            end
+        }
+    }
+    options[:rna_seq_files] = nil
+    opts.on('-r','--rsqd RNA_SEQ_DIR','Directory containing only valid RNAseq files') { |rsqd|
+        options[:rna_seq_files] = Array.new
+        Dir.entries(rsqd).each {|file|
+            if(file != "." && file != "..")
+                options[:rna_seq_files] << "#{rsqd}/#{file}"
+            end
+        }
     }
 }
 optparse.parse!
+
+def checkSeqsInHash(seqs,hash,hash_len,loghandl)
+    msg = "INFO: Checking fasta sequences are in hashed data."
+    loghandl.puts msg
+    puts msg
+    msg = "=================================================="
+    loghandl.puts msg
+    puts msg
+    invalid_seqs = Set.new
+    seqs.each {|seq|
+        expr_sig = hash[seq.id]
+        if(!expr_sig.nil? && expr_sig.class == String && expr_sig.match(RgxLib::ACCG_EXPR_SIG))
+            print "."
+            $stdout.flush
+        else
+            invalid_seqs << seq
+            msg = "WARNING: sequence '#{seq.id}' not a valid key in hash."
+            loghandl.puts msg
+            puts msg
+            $stdout.flush
+            print "x"
+            $stdout.flush
+        end
+    }
+    puts
+    seqs = seqs - invalid_seqs
+    msg = "INFO: #{invalid_seqs.length} sequences removed, #{seqs.length} remain..."
+    loghandl.puts msg
+    puts msg
+    return seqs
+end
+
+def parseFasta(fasta_files,id_grab_expr,loghandl,seqhandl)
+    msg = "INFO: Below FASTA files supplied\n#{fasta_files.join("\n")}"
+    loghandl.puts msg
+    puts msg
+    seqhandl.puts SEQ_HEADER
+    seqs = Set.new
+    fasta_files.each {|fasta_file|
+        msg = "Loading #{fasta_file}..."
+        loghandl.puts msg
+        puts msg
+        parser = FastaParser.new(fasta_file,id_grab_expr,loghandl)
+        parser.open
+        while(next_seq = parser.nextSeq)
+            if(next_seq.bp_list.length > MIN_SEQ_LEN)
+                seqs << next_seq
+                print "."
+            else
+                seqhandl.puts next_seq
+                print "x"
+            end
+            $stdout.flush
+        end
+        parser.close
+    }
+    puts
+    msg = "INFO: Fasta files loaded. (#{seqs.length} unique sequences > #{MIN_SEQ_LEN}bp)"
+    loghandl.puts msg
+    puts msg
+    msg = "=====================#{'='*seqs.length.to_s.length}================#{'='*MIN_SEQ_LEN.to_s.length}=" 
+    loghandl.puts msg
+    puts msg
+    return seqs
+end
 
 if(options[:fasta_files].nil?)
     msg = "ERROR: No FASTA files supplied"
     loghandl.puts msg
     puts msg
     raise(ArgumentError,msg)
-else
-    msg = "INFO: Below FASTA files supplied\n#{options[:fasta_files].join("\n")}"
-    loghandl.puts msg
-    puts msg
 end
-if(options[:ma_files].nil?)
-    msg = "ERROR: No MA files supplied"
+
+seq_hash = nil
+fasta_seqs = nil
+expr_sig_len = nil
+if(options[:ma_files].nil? && options[:rna_seq_files].nil?)
+    msg = "ERROR: No expression files supplied"
     loghandl.puts msg
     puts msg
     raise(ArgumentError,msg)
-else
+elsif(options[:rna_seq_files].nil?)
     msg = "INFO: Below MA files supplied (order maintained in expression signatures)\n#{options[:ma_files].join("\n")}"
     loghandl.puts msg
     puts msg
-end
-
-msg = "Hashing microarray data..."
-loghandl.puts msg
-puts msg
-seq_hash = MicroArrayHashBuilder.makeHash(*options[:ma_files],Q_LIM,loghandl)
-msg = "Microarray data hashed"
-loghandl.puts msg
-puts msg
-msg = "======================"
-loghandl.puts msg
-puts msg
-
-seqhandl.puts SEQ_HEADER
-seqs = Set.new
-options[:fasta_files].each {|fasta_file|
-    msg = "Loading #{fasta_file}..."
+    expr_sig_len = options[:ma_files].length
+    fasta_seqs = parseFasta(options[:fasta_files],RgxLib::FASTP_MA_ID_GRAB,loghandl,seqhandl)
+    seq_hash = MicroArrayHashBuilder.makeHash(*options[:ma_files],Q_LIM,loghandl)
+elsif(options[:ma_files].nil?)
+    msg = "INFO: Below RNAseq files supplied (order maintained in expression signatures)\n#{options[:rna_seq_files].join("\n")}"
     loghandl.puts msg
     puts msg
-    parser = FastaParser.new(fasta_file,loghandl)
-    parser.open
-    while(next_seq = parser.nextSeq)
-        if(next_seq.bp_list.length > MIN_SEQ_LEN)
-            seqs << next_seq
-            print "."
-        else
-            seqhandl.puts next_seq
-            print "x"
-        end
-        $stdout.flush
-    end
-    parser.close
-}
-puts
-msg = "Fasta files loaded. (#{seqs.length} unique sequences > #{MIN_SEQ_LEN}bp)"
-loghandl.puts msg
-puts msg
-msg = "=====================#{'='*seqs.length.to_s.length}================#{'='*MIN_SEQ_LEN.to_s.length}=" 
-loghandl.puts msg
-puts msg
+    expr_sig_len = options[:rna_seq_files].length
+    fasta_seqs = parseFasta(options[:fasta_files],RgxLib::FASTP_RNA_SEQ_ID_GRAB,loghandl,seqhandl)
+    seq_hash = RNAseqHashBuilder.makeHash(*options[:rna_seq_files],P_ADJ_LIM,loghandl)
+else
+    msg = "ERROR: Only one type of expression file may be specified."
+    loghandl.puts msg
+    raise(ArgumentError,msg)
+end
+seqs = checkSeqsInHash(fasta_seqs,seq_hash,expr_sig_len,loghandl)
 
 msg = "Querying NCBI..."
 loghandl.puts msg
@@ -171,8 +220,11 @@ seqs.each_with_index {|seq,i|
     h = (dt / 3600).floor
     m = ((dt % 3600) / 60).floor
     s = ((dt % 3600) % 60).floor
-    printf("Submitting sequence #{i}, #{seq.id}, to NCBI at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
-    put_results << blaster.submitTblastxQuery(seq)
+    printf("Submitting sequence #{i}, id=#{seq.id}, bp_list=#{seq.bp_list}, to NCBI at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+    result = blaster.submitTblastxQuery(seq)
+    if(!result.nil?)
+        put_results << result
+    end
     if(i % 100 == 99)
         put_results.each {|p_res|
             dt = Time.now - START_TIME
@@ -215,7 +267,6 @@ msg = "Grouping sequences..."
 loghandl.puts msg
 puts msg
 acc_num_groups = Hash.new
-expr_sig_len = options[:ma_files].length
 ncbi_blast_results.each {|ncbi_res|
     print "."
     $stdout.flush
@@ -226,7 +277,13 @@ ncbi_blast_results.each {|ncbi_res|
         end
         seq_id   = ncbi_res.sequence.id
         expr_sig = seq_hash[seq_id]
-        acc_num_groups[acc_num].addRes(ncbi_res,expr_sig)
+        if(!expr_sig.nil?)
+            acc_num_groups[acc_num].addRes(ncbi_res,expr_sig)
+        else
+            msg = "WARNING: expr_sig for #{seq_id} is nil. This may indicate FASTA/MA mismatch."
+            @loghandl.puts msg
+            puts msg
+        end
     else
         cur_seq          = ncbi_res.sequence
         cur_seq.expr_sig = seq_hash[cur_seq.id]

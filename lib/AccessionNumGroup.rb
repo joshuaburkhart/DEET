@@ -35,10 +35,14 @@ class AccessionNumGroup
                 end
                 @paralogs[expr_sig] << res
             else
-                raise(ArgumentError,"ERROR: res '#{res}' not valid")
+                msg = "ERROR: res '#{res}' not valid"
+                @loghandl.puts msg
+                raise(ArgumentError,msg)
             end
         else
-            raise(ArgumentError,"ERROR: expr_sig '#{expr_sig}' not a valid expression signature")
+            msg = "ERROR: expr_sig '#{expr_sig}' not a valid expression signature. Cannot add res '#{res}' to group."
+            @loghandl.puts msg
+            raise(ArgumentError,msg)
         end
     end
     def getRepresentativeSeq(expr_sig)
@@ -47,7 +51,9 @@ class AccessionNumGroup
            && expr_sig.match(RgxLib::ACCG_EXPR_SIG))
             return getRepresentativeRes(expr_sig).sequence
         else
-            raise(ArgumentError,"ERROR: expr_sig '#{expr_sig}' not a valid expression signature")
+            msg = "ERROR: expr_sig '#{expr_sig}' not a valid expression signature"
+            @loghandl.puts msg
+            raise(ArgumentError,msg)
         end
     end
     def getRepresentativeRes(expr_sig)
@@ -56,7 +62,9 @@ class AccessionNumGroup
            && expr_sig.match(RgxLib::ACCG_EXPR_SIG))
             return longestRes(@paralogs[expr_sig])
         else
-            raise(ArgumentError,"ERROR: expr_sig '#{expr_sig}' not a valid expression signature")
+            msg = "ERROR: expr_sig '#{expr_sig}' not a valid expression signature"
+            @loghandl.puts msg
+            raise(ArgumentError,msg)
         end
     end
     def getParalogExprSigs
@@ -82,7 +90,9 @@ class AccessionNumGroup
             res = ncbi_res_ary.sort {|i,j| j.sequence.bp_list.length <=> i.sequence.bp_list.length }[0]
             return res
         else
-            raise(ArgumentError,"ERROR: ncbi_res_ary '#{ncbi_res_ary}' not a valid array")
+            msg = "ERROR: ncbi_res_ary '#{ncbi_res_ary}' not a valid array"
+            @loghandl.puts msg
+            raise(ArgumentError,msg)
         end
     end
     def repSeqDat(e_lim)

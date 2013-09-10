@@ -3,11 +3,18 @@ require_relative 'RgxLib'
 class FastaParser
     @fasta_filename
     @fasta_filehandl
-    def initialize(fasta_filename,loghandl)
+    def initialize(fasta_filename,id_grab_expr,loghandl)
         if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
             @loghandl = loghandl
             if(!fasta_filename.nil? && fasta_filename.class == String && File.exist?(fasta_filename))
-                @fasta_filename = fasta_filename
+                if(!id_grab_expr.nil? && id_grab_expr.class == Regexp)
+                    @fasta_filename = fasta_filename
+                    @id_grab_expr = id_grab_expr
+                else
+                    msg = "ERROR: ID Grab Expression '#{id_grab_expr}' not a valid expression"
+                    @loghandl.puts msg
+                    raise(ArgumentError,msg)
+                end
             else
                 msg = "ERROR: File '#{fasta_filename}' not a valid file"
                 @loghandl.puts msg
@@ -32,7 +39,7 @@ class FastaParser
             raise(IOError,msg)
         end
     end
-    def nextSeq()
+    def nextSeq
         seq_id = nil
         seq_bp_list = ""
         seq = nil
@@ -44,7 +51,7 @@ class FastaParser
                 id_line = @buffer
             end
             if(!id_line.nil?)
-                if(id_line.match(RgxLib::FASTP_ID_GRAB))
+                if(id_line.match(@id_grab_expr))
                     seq_id = $1
                     bp_line = readFastaLine
                     while(!bp_line.nil? && bp_line.match(RgxLib::SEQ_BP_LIST))
@@ -64,7 +71,7 @@ class FastaParser
         line = nil
         if(!fileHandlIssue)
             line = @fasta_filehandl.gets
-            if(!line.match(RgxLib::FASTP_ID_GRAB) && !line.match(RgxLib::SEQ_BP_LIST))
+            if(!line.match(@id_grab_expr) && !line.match(RgxLib::SEQ_BP_LIST))
                 msg = "ERROR: '#{line}' not valid fasta format"
                 @loghandl.puts msg
                 raise(ArgumentError,msg)
