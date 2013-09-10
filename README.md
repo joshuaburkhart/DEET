@@ -3,46 +3,26 @@ deet
 
 A program that finds and annotates genes using contigs and singletons yielded from mosquito microarray assays.
 
-Input format:
+Input:
 
-    A fasta file containing both contig & singleton sequences with a ">" and a sequence identifier on one line and the corresponding sequence on the next line. 
+    1. A fasta file containing both contig & singleton sequences, specified with -f.
 
-    Example:
+    2. A directory containing either Nimblegen Microarray or RNAseq data files, respectively specified with -m or -r.
 
-    ...
+Examples:
 
-    >CONTIG06215
-    ACAATTCTAGTAAAGCATTTGTCATCTTCTTTATATTTTTGGCAGTAaaCAGTCTGCAGTTCACCGCTCAACTCTTCGGCGCAACTTCTGTTCGTATCATTAGTTTTACATTGGTAACACCGGAGACGATCCATTGGGAAGACATCCCTATTGCAGTTGTCTGTTCCACAAACGCTGCAGGTTTTACCTGTACAGGCTTGCGTCTCGTTCAGCGTTAGATTTCCTTCACAGCCTCGAATGACATGGCCATCATCAACTACTTTCGAGTAACATTTCCCTGCAAACGCTTTAGCGCACGGTCCACTGCTGGTTGTGCCCAGAAGACAcTTTtCGTCATCGTCGTCGTCAACTTCCGAACTACATTGCAAACATTGCCGGACAGCCGGAGCCTCTCGATTGCAACCGTCAGTAGAGCACGTtCTGcATTCCCTACTATCCagACAAGCATCCACATTCAAACCAAGATCATTCTCACACCCTCTAGTGAGAgttGCACCCTCCATCCGTTCGTAGCAtcGGTTGTTACTcTTCCAATACTGACAGTAACCGGTGGCGTTGGTTTGCTGCTCagCACACGTGGCATCGGAAGCCTGGTTGCACTTGTAACACTGTAACCAATGGTCGGTATTACAGCCAGCAGAGTCACAGACAGTACAAGTTGCGTCCTCGGTTCGATTGCAAAGTGTTTGCTCTACAGCCGGAAGTGTTGACAAGCAACCGCGCTCAAGAAGGCCTCCTGTAACTCGTGTATAGCAGTTGTCCTGCTGTGTGATACATTTCTTCGGTGCGGCTGTACCATCCACACAGGTAGCGTCGGTTGAATTACACTGCAGACACCGGGAAGAGTTCTTCATCTCGGtgACGGACAGcTtGTTGCACAaTTCACCCGAGCAAATCGTACACACATCATTGTCACACGCGGTTTGCGGATCGGCGAAATCCGACAAACAGCCTCTGGTAACATTATCGCCTTCTATTTTAGTGTAACATCGATCATCGCTGCTGAAAATCGAACAAAGCTTGCCTCCCcTTTCCGGTTGCTCGGTGgTACAGTTTGCAGTGTTGGTCGAATCGCAGCTATGACACTTCAACCAGGGTGCGTTGTTACATCCGGCCCcGGTAcAGGTTACGCAGCTTGAATCAGTGCTATtGGTACAAGCACTAGCGATCGGATCcACCAGGCAGCCTCGTACGACGGCGTTGTCACTGGTTAGCATAGTGTAGCATTGATTAGCC
-    >F5BTJ3O01C7KYF
-    AATCACGACCAGCCAAGTCCAGACGGAGGATGGGCATGTGGCAAAGGGCACACAGGGG
-    >F5BTJ3O01BEOZD
-    CAACATCCGCAAGCTGTACAATCTAGGCAAGGATGACGATGTGCGTCAGTTCGTCGTTAA
+    1. ruby deet.rb -f ~/research/Bradshaw/gene_expression/microarray/fastas/Contigs_and_Singletons.simple.fasta -m ~/research/Bradshaw/gene_expression/microarray/ma_dat/photoperiod/
 
-    ...
-
-    Procedure using https://github.com/joshuaburkhart/bio programs:
-
-    $fa2oneline.pl Contigs.fna > Contigs.oneline.fna
-    $fa2oneline.pl Singletons.fna > Singletons.oneline.fna
-    $fasta_cleaner.sh Contigs.oneline.fna 6
-    $fasta_cleaner.sh Singletons.oneline.fna 7
-    $cat Contigs.oneline.fna.indexed | awk -F' ' '{print ">"$1"\n"$2}' > Contigs.simple.fasta
-    $cat Singletons.oneline.fna.indexed | awk -F' ' '{print ">"$1"\n"$2}' > Singletons.simple.fasta
-    $cp Contigs.simple.fasta Contigs_and_Singletons.simple.fasta
-    $cat Singletons.simple.fasta >> Contigs_and_Singletons.simple.fasta
+    2. ruby deet.rb -f ~/research/Bradshaw/gene_expression/rna_seq/fastas/contigs.fa -r ~/research/Bradshaw/gene_expression/rna_seq/rna_dat/
 
 Algorithm Overview:
 
-    1. work through Justin Choi's pipeline (doi: 10.1186/1471-2164-11-703)
-    2. parse Justin Choi's output along with FASTA files, representing clusters by their longest sequence
-    3. tblastx each sequence against Arthropods, Anopheles, and Drosophila
-    4. record the two alignments for each ncbi result with the lowest E values
-    5. group ncbi results by accession number of alignment with lowest E value
-    6. parse microarray data, dividing accession number groups by expression signature
-    7. use accession number groups from 5 and expression signature groups from 6 to produce a list of putative genes and paralogs
-    8. represent expression signature groups by their longest sequence
-    9. produce 2D expression plots
-    10. submit sequences to U. Indiana's annotation web tool
-    11. submit resulting annotations to a pie chart tool
-
+    1. parse provided fasta file(s), storing sequences longer than MIN_SEQ_LEN (set to 100 by default)
+    2. report sequences shorter than or equal to MIN_SEQ_LEN in .seqs.csv
+    2. hash expression data by sequence id, setting each value to that sequence's expression pattern (where 0=under expressed, 1=over expressed, and X=not significantly expressed)
+    3. filter fasta sequences, assuring their existance in the hash
+    4. query NCBI web interface for sequence
+    5. record unmatched sequences and those with a low e value in .seqs.csv (E_LIM set to 1.0e-5 by default)
+    6. group sequences by accession number, then by expression signature
+    7. report groups of sequences in .result .seqs.csv files
 
