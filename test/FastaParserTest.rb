@@ -45,50 +45,49 @@ EOS
     def testCreation
         #both params valid
         filename = V_FASTA_N
-        min_len = 20   
-        actual = FastaParser.new(filename,min_len,@loghandl)
+        id_grab_expr = RgxLib::FASTP_MA_ID_GRAB
+        actual = FastaParser.new(filename,id_grab_expr,@loghandl)
         assert_not_nil(actual)
         assert_equal(filename,actual.fasta_filename)
-        assert_equal(min_len,actual.min_len)
 
         filename = I_FASTA_N
-        min_len = 20
-        actual = FastaParser.new(filename,min_len,@loghandl)
+        id_grab_expr = RgxLib::FASTP_MA_ID_GRAB
+        actual = FastaParser.new(filename,id_grab_expr,@loghandl)
         assert_not_nil(actual)
         assert_equal(filename,actual.fasta_filename)
-        assert_equal(min_len,actual.min_len)
 
         #filename invalid
         filename = "nonexistant file"
-        min_len = 20
+        id_grab_expr = RgxLib::FASTP_MA_ID_GRAB
+        id_grab_expr = RgxLib::FASTP_MA_ID_GRAB
         assert_raise ArgumentError do
-            FastaParser.new(filename,min_len,@loghandl)
+            FastaParser.new(filename,id_grab_expr,@loghandl)
         end
 
-        #min_len invalid
+        #id_grab_expr invalid
         filename = I_FASTA_N
-        min_len = 'a'
+        id_grab_expr = 'a'
         assert_raise ArgumentError do
-            FastaParser.new(filename,min_len,@loghandl)
+            FastaParser.new(filename,id_grab_expr,@loghandl)
         end
 
         filename = V_FASTA_N
-        min_len = "2.91232354"
+        id_grab_expr = nil
         assert_raise ArgumentError do
-            FastaParser.new(filename,min_len,@loghandl)
+            FastaParser.new(filename,id_grab_expr,@loghandl)
         end
 
         #both params invalid
         filename = "another-nonexistant, , file"
-        min_len = "3.141592653589"
+        id_grab_expr = 4
         assert_raise ArgumentError do
-            FastaParser.new(filename,min_len,@loghandl)
+            FastaParser.new(filename,id_grab_expr,@loghandl)
         end
     end
     def testFileOpenClose
         filename = V_FASTA_N
-        min_len = 20   
-        parser = FastaParser.new(filename,min_len,@loghandl)
+        id_grab_expr = RgxLib::FASTP_MA_ID_GRAB
+        parser = FastaParser.new(filename,id_grab_expr,@loghandl)
         parser.open
         actual = parser.fasta_filehandl
         expected = File.open(V_FASTA_N,"w")
@@ -101,8 +100,8 @@ EOS
     def testNextSeq
         #valid fasta
         filename = V_FASTA_N
-        min_len = 8
-        parser = FastaParser.new(filename,min_len,@loghandl)
+        id_grab_expr = RgxLib::FASTP_MA_ID_GRAB
+        parser = FastaParser.new(filename,id_grab_expr,@loghandl)
         parser.open
 
         actual_seq1 = parser.nextSeq
@@ -128,8 +127,8 @@ EOS
 
         #invalid fasta
         filename = I_FASTA_N
-        min_len = 8
-        parser = FastaParser.new(filename,min_len,@loghandl)
+        id_grab_expr = RgxLib::FASTP_MA_ID_GRAB
+        parser = FastaParser.new(filename,id_grab_expr,@loghandl)
         parser.open
 
         assert_raise ArgumentError do
@@ -138,10 +137,9 @@ EOS
 
         parser.close
 
-        #increasing min_len
         filename = V_FASTA_N
-        min_len = 9
-        parser = FastaParser.new(filename,min_len,@loghandl)
+        id_grab_expr = RgxLib::FASTP_MA_ID_GRAB
+        parser = FastaParser.new(filename,id_grab_expr,@loghandl)
         parser.open
 
         parser.nextSeq

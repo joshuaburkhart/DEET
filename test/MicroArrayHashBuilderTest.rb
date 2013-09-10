@@ -42,6 +42,7 @@ EOS
         ivh.close
         @log_filename = "#{Time.now.to_i}.testlog"
         @loghandl = File.open(@log_filename,"w")
+        @q_lim = 0.05
     end
     def teardown
         #delete sample ma_files from disk
@@ -53,7 +54,7 @@ EOS
     end
     def testMakeHash
         #single valid ma_filename
-        seq_hash = MicroArrayHashBuilder.makeHash("valid_ma_dat1.txt",@loghandl)
+        seq_hash = MicroArrayHashBuilder.makeHash("valid_ma_dat1.txt",@q_lim,@loghandl)
         assert_not_nil(seq_hash)
         assert_equal(Hash,seq_hash.class)
         actual = seq_hash["F5BTJ3O01A06K0"]
@@ -85,7 +86,7 @@ EOS
         assert_equal(expected,actual)
 
         #multiple valid ma_filenames
-        seq_hash = MicroArrayHashBuilder.makeHash("valid_ma_dat1.txt","valid_ma_dat2.txt",@loghandl)
+        seq_hash = MicroArrayHashBuilder.makeHash("valid_ma_dat1.txt","valid_ma_dat2.txt",@q_lim,@loghandl)
         assert_not_nil(seq_hash)
         assert_equal(Hash,seq_hash.class)
         actual = seq_hash["F5BTJ3O01A06K0"]
@@ -118,22 +119,22 @@ EOS
 
         #single invalid ma_filename
         assert_raise ArgumentError do
-            MicroArrayHashBuilder.makeHash("an invalid filename",@loghandl)
+            MicroArrayHashBuilder.makeHash("an invalid filename",@q_lim,@loghandl)
         end
 
         #multiple invalid ma_filenames
         assert_raise ArgumentError do
-            MicroArrayHashBuilder.makeHash("an invalid filename","another invalid filename",@loghandl)
+            MicroArrayHashBuilder.makeHash("an invalid filename","another invalid filename",@q_lim,@loghandl)
         end
 
         #single file with invalid format
         assert_raise ArgumentError do
-            MicroArrayHashBuilder.makeHash("invalid_ma_dat.txt",@loghandl)
+            MicroArrayHashBuilder.makeHash("invalid_ma_dat.txt",@q_lim,@loghandl)
         end
 
        #mix valid and invalid file formats
        assert_raise ArgumentError do
-           MicroArrayHashBuilder.makeHash("valid_ma_dat1.txt","valid_ma_dat2.txt","invalid_ma_dat.txt",@loghandl)
+           MicroArrayHashBuilder.makeHash("valid_ma_dat1.txt","valid_ma_dat2.txt","invalid_ma_dat.txt",@q_lim,@loghandl)
        end
     end
 end
