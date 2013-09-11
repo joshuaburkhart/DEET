@@ -25,6 +25,7 @@ class Sequence
         @name        = "N/A"
         @locus_tag   = "N/A"
         @expr_sig    = "N/A"
+        @acc_num     = "N/A"
         @ignored     = true
         @orphan      = false
         @paralog_num = 0
@@ -44,9 +45,9 @@ class Sequence
             status = 0
         elsif(@orphan)
             status = 1
-        elsif(!@acc_num.nil? && @paralog_num == 0)
+        elsif(@paralog_num == 0)
             status = 2
-        elsif(@paralog.nil?)
+        elsif(@paralog_num > 0)
             status = 3
         end
         return status
