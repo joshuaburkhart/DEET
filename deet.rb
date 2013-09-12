@@ -122,7 +122,7 @@ def checkSeqsInHash(seqs,hash,hash_len,loghandl)
             $stdout.flush
         else
             invalid_seqs << seq
-            msg = "WARNING: sequence '#{seq.id}' not a valid key in hash."
+            msg = "\nWARNING: sequence '#{seq.id}' not a valid key in hash."
             loghandl.puts msg
             puts msg
             $stdout.flush
