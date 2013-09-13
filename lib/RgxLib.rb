@@ -1,5 +1,5 @@
 module RgxLib
-    SEQ_ID                = /^([^\s\\n]+)$/
+    SEQ_ID                = /^([^\s]+)$/
     SEQ_BP_LIST           = /^([atcgnATCGN]*)$/    
     ALGN_ACC_NUM          = /^[0-9a-zA-Z._-]+$/
     ALGN_E_VAL            = /^([0-9.]+(e-)?([0-9]+)?)$/
