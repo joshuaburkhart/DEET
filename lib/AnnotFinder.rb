@@ -1,7 +1,8 @@
 require 'net/http'
 require_relative 'RgxLib'
+require_relative 'NCBIBlaster'
 
-class AnnotFinder
+class AnnotFinder < NCBIBlaster
     NCBI_GENE_URI = URI('http://www.ncbi.nlm.nih.gov/gene')
     @name
     @locus_tag
@@ -9,14 +10,22 @@ class AnnotFinder
         if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
             @loghandl = loghandl
             @acc_num = acc_num
-            term_param = {
-                :TERM => @acc_num
-            }
-            NCBI_GENE_URI.query = URI.encode_www_form(term_param)
-            @annot_page = Net::HTTP.get_response(NCBI_GENE_URI)
+            fetchAnnotation
         else
             raise(ArgumentError,"ERROR: loghandl '#{loghandl}' not a valid file handle")
         end
+        super(loghandl)
+    end
+    def fetchAnnotation
+        @annot_page = webCall(self.method(:annotate))
+    end
+    def annotate
+        term_param = {
+            :TERM => @acc_num
+        }
+        NCBI_GENE_URI.query = URI.encode_www_form(term_param)
+        ncbi_response = Net::HTTP.get_response(NCBI_GENE_URI)
+        return ncbi_response.nil? ? "<ERROR QUERYING NCBI>" : ncbi_response
     end
     def getLocusTag
         if(@locus_tag.nil?)
