@@ -33,7 +33,9 @@ class AccessionNumGroup
                 if(@paralogs[expr_sig].nil?)
                     @paralogs[expr_sig] = Array.new
                 end
-                @paralogs[expr_sig] << res
+                if(!@paralogs[expr_sig].include?(res))
+                    @paralogs[expr_sig] << res
+                end
             else
                 msg = "ERROR: res '#{res}' not valid"
                 @loghandl.puts msg

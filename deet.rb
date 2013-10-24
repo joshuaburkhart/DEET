@@ -2,6 +2,7 @@
 
 require 'optparse'
 require 'set'
+require 'yaml'
 
 require_relative 'lib/Sequence'
 require_relative 'lib/Alignment'
@@ -213,32 +214,49 @@ loghandl.puts msg
 puts msg
 blaster            = NCBIBlaster.new(loghandl)
 put_results        = Set.new
-ncbi_blast_results = Set.new
+ncbi_blast_results = nil
+if(File.exists?("ncbi_blast_results.serialized"))
+    puts "Detected serialized blast results..."
+    serialized_results = File.read("ncbi_blast_results.serialized")
+    ncbi_blast_results = YAML::load(serialized_results)
+    puts "Loaded #{ncbi_blast_results.size} blast results..."
+else
+    ncbi_blast_results = Set.new
+end
+
 ret_seq_count      = 0
 seqs.each_with_index {|seq,i|
-    dt = Time.now - START_TIME
-    h = (dt / 3600).floor
-    m = ((dt % 3600) / 60).floor
-    s = ((dt % 3600) % 60).floor
-    printf("Submitting sequence #{i}, id=#{seq.id}, bp_list=#{seq.bp_list}, to NCBI at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
-    result = blaster.submitTblastxQuery(seq)
-    if(!result.nil?)
-        put_results << result
-    end
-    if(i % 100 == 99)
-        put_results.each {|p_res|
-            dt = Time.now - START_TIME
-            h  = (dt / 3600).floor
-            m  = ((dt % 3600) / 60).floor
-            s  = ((dt % 3600) % 60).floor
-            printf("Retrieving sequence #{ret_seq_count}, #{p_res.seq.id}, from NCBI at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
-            ncbi_blast_result = blaster.fetchTblastxResult(p_res)
-            if(!ncbi_blast_result.nil?)
-                ncbi_blast_results << ncbi_blast_result
-            end
-            put_results.delete(p_res)
-            ret_seq_count += 1
-        }
+    if(!ncbi_blast_results.include?(seq))
+        dt = Time.now - START_TIME
+        h = (dt / 3600).floor
+        m = ((dt % 3600) / 60).floor
+        s = ((dt % 3600) % 60).floor
+        printf("Submitting sequence #{i}, id=#{seq.id}, bp_list=#{seq.bp_list}, to NCBI at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+        result = blaster.submitTblastxQuery(seq)
+        if(!result.nil?)
+            put_results << result
+        end
+        if(i % 100 == 99)
+            put_results.each {|p_res|
+                dt = Time.now - START_TIME
+                h  = (dt / 3600).floor
+                m  = ((dt % 3600) / 60).floor
+                s  = ((dt % 3600) % 60).floor
+                printf("Retrieving sequence #{ret_seq_count}, #{p_res.seq.id}, from NCBI at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+                ncbi_blast_result = blaster.fetchTblastxResult(p_res)
+                if(!ncbi_blast_result.nil?)
+                    ncbi_blast_results << ncbi_blast_result
+                    if(i % 1000 == 0)
+                        puts "Serializing #{ncib_blast_results.size} blast results..."
+                        serialized_results = YAML::dump(ncbi_blast_results)
+                        File.write("ncbi_blast_results.serialized",serialized_results)
+                        puts "Blast results serialized..."
+                    end
+                end
+                put_results.delete(p_res)
+                ret_seq_count += 1
+            }
+        end
     end
 }
 if(put_results.length > 0)
@@ -266,15 +284,25 @@ puts msg
 msg = "Grouping sequences..."
 loghandl.puts msg
 puts msg
-acc_num_groups = Hash.new
-ncbi_blast_results.each {|ncbi_res|
+acc_num_groups = nil
+if(File.exists?("acc_num_groups.serialized"))
+    serialized_acc_num_groups = File.read("acc_num_groups.serialized")
+    acc_num_groups = YAML::load(serialized_acc_num_groups)
+else
+    acc_num_groups = Hash.new
+end
+ncbi_blast_results.each_with_index {|ncbi_res,j|
     print "."
     $stdout.flush
     if(ncbi_res.hasAlignments?)
-        acc_num = ncbi_res.bestAlignment.accession_num
+        acc_num = ncbi_res.bestAlignment.accession_num        
         if(acc_num_groups[acc_num].nil?)
             acc_num_groups[acc_num] = AccessionNumGroup.new(acc_num,expr_sig_len,loghandl)
         end
+        if(j % 1000 == 0)
+            serialized_acc_num_groups = YAML::dump(acc_num_groups)
+            File.write("acc_num_groups.serialized",serialized_acc_num_groups)
+        end        
         seq_id   = ncbi_res.sequence.id
         expr_sig = seq_hash[seq_id]
         if(!expr_sig.nil?)
