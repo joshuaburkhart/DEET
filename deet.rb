@@ -25,7 +25,11 @@ E_LIM        = 1.0e-5
 MIN_SEQ_LEN  = 100
 
 OUT_DIR_NAME = "output/"
+NCBI_RES_SER_FN = "ncbi_blast_results.serialized"
+SEQ_KEYS_SER_FN = "seq_keys.serialized"
+ACC_NUMG_SER_FN = "acc_num_groups.serialized"
 SEQ_HEADER = "ID~Status~Name~Locus Tag~NCBI Acc #~Paralog #~Expr Sig"
+
 
 %x(mkdir -p #{OUT_DIR_NAME})
 outfile_prefix  = "#{OUT_DIR_NAME}#{EX_ID}"
@@ -139,6 +143,33 @@ def checkSeqsInHash(seqs,hash,hash_len,loghandl)
     return seqs
 end
 
+def storePutResult(ret_seq_count,p_res,blaster,ncbi_blast_results,seq_keys)
+    dt = Time.now - START_TIME
+    h  = (dt / 3600).floor
+    m  = ((dt % 3600) / 60).floor
+    s  = ((dt % 3600) % 60).floor
+    printf("Retrieving sequence #{ret_seq_count}, #{p_res.seq.id}, from NCBI at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+    ncbi_blast_result = blaster.fetchTblastxResult(p_res)
+    if(!ncbi_blast_result.nil?)
+        ncbi_blast_results[ncbi_blast_result.sequence.id] = ncbi_blast_result
+        seq_keys[ncbi_blast_result.sequence.id] = ncbi_blast_result.sequence
+        puts "Serializing #{ncbi_blast_results.size} blast results..."
+        serialized_results    = YAML::dump(ncbi_blast_results)
+        serialized_keys       = YAML::dump(seq_keys)
+        serialized_results_fh = File.open(NCBI_RES_SER_FN,"w")
+        serialized_keys_fh    = File.open(SEQ_KEYS_SER_FN,"w")
+        serialized_results_fh.write(serialized_results)
+        serialized_keys_fh.write(serialized_keys)
+        serialized_results_fh.flush
+        serialized_keys_fh.flush
+        serialized_results_fh.close
+        serialized_keys_fh.close
+        puts "Blast results serialized..."
+    else
+        puts "Blast result nil!"
+    end
+end
+
 def parseFasta(fasta_files,id_grab_expr,loghandl,seqhandl)
     msg = "INFO: Below FASTA files supplied\n#{fasta_files.join("\n")}"
     loghandl.puts msg
@@ -215,18 +246,25 @@ puts msg
 blaster            = NCBIBlaster.new(loghandl)
 put_results        = Set.new
 ncbi_blast_results = nil
-if(File.exists?("ncbi_blast_results.serialized"))
+seq_keys = nil
+if(File.exists?(NCBI_RES_SER_FN) && File.exists?(SEQ_KEYS_SER_FN))
     puts "Detected serialized blast results..."
-    serialized_results = File.read("ncbi_blast_results.serialized")
+    serialized_results = File.read(NCBI_RES_SER_FN)
+    serialized_keys    = File.read(SEQ_KEYS_SER_FN)
     ncbi_blast_results = YAML::load(serialized_results)
+    seq_keys           = YAML::load(serialized_keys)
     puts "Loaded #{ncbi_blast_results.size} blast results..."
-else
-    ncbi_blast_results = Set.new
 end
+if(ncbi_blast_results.nil? || seq_keys.nil?)
+    ncbi_blast_results = Hash.new
+    seq_keys           = Hash.new
+end
+puts "ncbi_blast_results is a #{ncbi_blast_results.class} with #{ncbi_blast_results.count} members"
+puts "seq_keys is a #{seq_keys.class} with #{seq_keys.count} members"
 
 ret_seq_count      = 0
 seqs.each_with_index {|seq,i|
-    if(!ncbi_blast_results.include?(seq))
+    if(!seq_keys.key?(seq.id))
         dt = Time.now - START_TIME
         h = (dt / 3600).floor
         m = ((dt % 3600) / 60).floor
@@ -238,38 +276,18 @@ seqs.each_with_index {|seq,i|
         end
         if(i % 100 == 99)
             put_results.each {|p_res|
-                dt = Time.now - START_TIME
-                h  = (dt / 3600).floor
-                m  = ((dt % 3600) / 60).floor
-                s  = ((dt % 3600) % 60).floor
-                printf("Retrieving sequence #{ret_seq_count}, #{p_res.seq.id}, from NCBI at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
-                ncbi_blast_result = blaster.fetchTblastxResult(p_res)
-                if(!ncbi_blast_result.nil?)
-                    ncbi_blast_results << ncbi_blast_result
-                    if(i % 1000 == 0)
-                        puts "Serializing #{ncib_blast_results.size} blast results..."
-                        serialized_results = YAML::dump(ncbi_blast_results)
-                        File.write("ncbi_blast_results.serialized",serialized_results)
-                        puts "Blast results serialized..."
-                    end
-                end
+                storePutResult(ret_seq_count,p_res,blaster,ncbi_blast_results,seq_keys)
                 put_results.delete(p_res)
                 ret_seq_count += 1
             }
         end
+    else
+        puts "seq #{seq} already in blast results!!!"
     end
 }
 if(put_results.length > 0)
     put_results.each {|rem_p_res|
-        dt = Time.now - START_TIME
-        h  = (dt / 3600).floor
-        m  = ((dt % 3600) / 60).floor
-        s  = ((dt % 3600) % 60).floor
-        printf("Retrieving sequence #{ret_seq_count}, #{rem_p_res.seq.id}, from NCBI at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
-        ncbi_blast_result = blaster.fetchTblastxResult(rem_p_res)
-        if(!ncbi_blast_result.nil?)
-            ncbi_blast_results << ncbi_blast_result
-        end
+        storePutResult(ret_seq_count,rem_p_res,blaster,ncbi_blast_results,seq_keys)
         put_results.delete(rem_p_res)
         ret_seq_count += 1
     }
@@ -285,28 +303,36 @@ msg = "Grouping sequences..."
 loghandl.puts msg
 puts msg
 acc_num_groups = nil
-if(File.exists?("acc_num_groups.serialized"))
-    serialized_acc_num_groups = File.read("acc_num_groups.serialized")
+if(File.exists?(ACC_NUMG_SER_FN))
+    puts "Detected serialized accession number groups..."
+    serialized_acc_num_groups = File.read(ACC_NUMG_SER_FN)
     acc_num_groups = YAML::load(serialized_acc_num_groups)
-else
+    puts "Loaded #{acc_num_groups.size} groups..."
+end
+if(acc_num_groups.nil?)
     acc_num_groups = Hash.new
 end
-ncbi_blast_results.each_with_index {|ncbi_res,j|
+ncbi_blast_results.values.each_with_index {|ncbi_res,j|
     print "."
     $stdout.flush
     if(ncbi_res.hasAlignments?)
         acc_num = ncbi_res.bestAlignment.accession_num        
         if(acc_num_groups[acc_num].nil?)
             acc_num_groups[acc_num] = AccessionNumGroup.new(acc_num,expr_sig_len,loghandl)
+        else
+            puts "acc_num #{acc_num} already in acc_num_groups!!!"
         end
-        if(j % 1000 == 0)
-            serialized_acc_num_groups = YAML::dump(acc_num_groups)
-            File.write("acc_num_groups.serialized",serialized_acc_num_groups)
-        end        
         seq_id   = ncbi_res.sequence.id
         expr_sig = seq_hash[seq_id]
         if(!expr_sig.nil?)
             acc_num_groups[acc_num].addRes(ncbi_res,expr_sig)
+            puts "Serializing #{acc_num_groups.size} accession number groups..."
+            serialized_acc_num_groups = YAML::dump(acc_num_groups)
+            serialized_acc_num_groups_fh = File.open(ACC_NUMG_SER_FN,"w")
+            serialized_acc_num_groups_fh.write(serialized_acc_num_groups)
+            serialized_acc_num_groups_fh.flush
+            serialized_acc_num_groups_fh.close
+            puts "Accession number groups serialized..."
         else
             msg = "WARNING: expr_sig for #{seq_id} is nil. This may indicate FASTA/MA mismatch."
             @loghandl.puts msg

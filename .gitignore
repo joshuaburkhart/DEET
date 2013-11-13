@@ -1,4 +1,7 @@
 *.swp
 *.swo
-input_files/
+*.serialized
+
 output/
+input_files/
+gene_expression/

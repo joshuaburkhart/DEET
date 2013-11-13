@@ -31,8 +31,4 @@ class NCBIBlastResult
     def bestAlignment
         @alignments.sort {|i,j| i.e_value <=> j.e_value}[0]
     end
-    def eql?(other)
-        #NCBIResults can be equal to a sequence
-        return (!@sequence.nil? && !@sequence.id.nil? && other.class == Sequence && @id == other.id)
-    end 
 end
