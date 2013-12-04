@@ -318,7 +318,10 @@ ncbi_blast_results.values.each_with_index {|ncbi_res,j|
     if(ncbi_res.hasAlignments?)
         acc_num = ncbi_res.bestAlignment.accession_num        
         if(acc_num_groups[acc_num].nil?)
-            acc_num_groups[acc_num] = AccessionNumGroup.new(acc_num,expr_sig_len,loghandl)
+            annot_finder = AnnotFinder.new(acc_num,loghandl)
+            annot_name = annot_finder.getName           
+            annot_locus_tag = annot_finder.getLocusTag
+            acc_num_groups[acc_num] = AccessionNumGroup.new(annot_name,annot_locus_tag,acc_num,expr_sig_len,loghandl)
         else
             puts "acc_num #{acc_num} already in acc_num_groups!!!"
         end

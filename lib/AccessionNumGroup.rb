@@ -6,7 +6,8 @@ class AccessionNumGroup
     @acc_num
     @expr_sig_len
     @paralogs
-    @annot_finder
+    @annot_name
+    @annot_locus_tag
     def initialize(acc_num,expr_sig_len,loghandl)
         if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
             @loghandl = loghandl
@@ -15,7 +16,6 @@ class AccessionNumGroup
                     @acc_num = acc_num
                     @expr_sig_len = expr_sig_len
                     @paralogs = Hash.new
-                    @annot_finder = AnnotFinder.new(@acc_num,@loghandl)
                 else
                     raise(ArgumentError,"ERROR: expr_sig_len '#{expr_sig_len}' not a valid length")
                 end
@@ -103,8 +103,8 @@ class AccessionNumGroup
         gene_expr_sig = getGeneExprSig
         best_gene_rep = getRepresentativeSeq(gene_expr_sig)
         best_gene_ncbi_res = getRepresentativeRes(gene_expr_sig)
-        best_gene_rep.name = @annot_finder.getName
-        best_gene_rep.locus_tag = @annot_finder.getLocusTag
+        best_gene_rep.name = @annot_name
+        best_gene_rep.locus_tag = @annot_locus_tag
         best_gene_rep.acc_num = @acc_num
         best_gene_rep.expr_sig = gene_expr_sig
         best_gene_rep.ignored = false
@@ -116,8 +116,8 @@ class AccessionNumGroup
         getParalogExprSigs.each_with_index {|psig,i|
             best_paralog_rep = getRepresentativeSeq(psig)
             best_paralog_ncbi_res = getRepresentativeRes(psig)
-            best_paralog_rep.name = @annot_finder.getName
-            best_paralog_rep.locus_tag = @annot_finder.getLocusTag
+            best_paralog_rep.name = @annot_name
+            best_paralog_rep.locus_tag = @annot_locus_tag
             best_paralog_rep.acc_num = @acc_num
             best_paralog_rep.expr_sig = psig
             best_paralog_rep.ignored = false
@@ -132,7 +132,7 @@ class AccessionNumGroup
         best_gene_rep = getRepresentativeSeq(gene_expr_sig)
         best_gene_ncbi_res = getRepresentativeRes(gene_expr_sig)
         string_rep =<<EOS
-GENE: #{@acc_num}, LOCUS TAG = #{@annot_finder.getLocusTag}, NAME = #{@annot_finder.getName}
+GENE: #{@acc_num}, LOCUS TAG = #{@annot_locus_tag}, NAME = #{@annot_name}
 ======#{'='*@acc_num.length}
 \tSIGNATURE: #{gene_expr_sig}
 \tBEST REPRESENTATIVE SEQUENCE ID: #{best_gene_rep.id}
