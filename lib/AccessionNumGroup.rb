@@ -8,7 +8,7 @@ class AccessionNumGroup
     @paralogs
     @annot_name
     @annot_locus_tag
-    def initialize(acc_num,expr_sig_len,loghandl)
+    def initialize(annot_name,annot_locus_tag,acc_num,expr_sig_len,loghandl)
         if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
             @loghandl = loghandl
             if(!acc_num.nil? && acc_num.class == String && acc_num.match(RgxLib::ALGN_ACC_NUM))
@@ -16,6 +16,8 @@ class AccessionNumGroup
                     @acc_num = acc_num
                     @expr_sig_len = expr_sig_len
                     @paralogs = Hash.new
+                    @annot_name = annot_name
+                    @annot_locus_tag = annot_locus_tag
                 else
                     raise(ArgumentError,"ERROR: expr_sig_len '#{expr_sig_len}' not a valid length")
                 end
