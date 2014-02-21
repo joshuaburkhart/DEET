@@ -23,7 +23,7 @@ class LocalDbBlaster
         local_db_blast_query_fh.close
         html_text = %x(#{BLAST_COMMAND})
         %x(rm -f #{TMP_QUERY_FILENAME})
-        local_db_blast_result = buildLOcalDbBlastResult(html_text,seq)
+        local_db_blast_result = buildLocalDbBlastResult(html_text,seq)
         return local_db_blast_result
     end
     def buildLocalDbBlastResult(text_result,seq)
