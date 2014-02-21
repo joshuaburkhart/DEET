@@ -196,7 +196,7 @@ seqs.each_with_index {|seq,i|
     if(!local_db_blast_result.nil?)
         local_db_blast_results[local_db_blast_result.sequence.id] = local_db_blast_result
         seq_keys[local_db_blast_result.sequence.id] = local_db_blast_result.sequence
-        printf("Retrieved sequence #{ret_seq_count}, #{p_res.seq.id}, from local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+        printf("Retrieved sequence #{ret_seq_count}, #{local_db_blast_result.sequence.id}, from local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
     else
         puts "Blast result nil!"
     end
