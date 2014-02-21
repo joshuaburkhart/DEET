@@ -175,7 +175,7 @@ else
 end
 seqs = checkSeqsInHash(fasta_seqs,seq_hash,expr_sig_len,loghandl)
 
-msg = "Querying Local Blast Database: #{local_blast_db}..."
+msg = "Querying Local Blast Database..."
 loghandl.puts msg
 puts msg
 blaster            = LocalDbBlaster.new(loghandl)
