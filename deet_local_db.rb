@@ -191,12 +191,12 @@ seqs.each_with_index {|seq,i|
     h = (dt / 3600).floor
     m = ((dt % 3600) / 60).floor
     s = ((dt % 3600) % 60).floor
-    printf("Submitting sequence #{i}, id=#{seq.id}, bp_list=#{seq.bp_list}, to #{local_blast_db} at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+    printf("Submitting sequence #{i}, id=#{seq.id}, bp_list=#{seq.bp_list}, to local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
     local_db_blast_result = blaster.submitTblastxQuery(seq)
     if(!local_db_blast_result.nil?)
         local_db_blast_results[local_db_blast_result.sequence.id] = local_db_blast_result
         seq_keys[local_db_blast_result.sequence.id] = local_db_blast_result.sequence
-        printf("Retrieved sequence #{ret_seq_count}, #{p_res.seq.id}, from #{local_blast_db} at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+        printf("Retrieved sequence #{ret_seq_count}, #{p_res.seq.id}, from local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
     else
         puts "Blast result nil!"
     end
