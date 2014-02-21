@@ -17,7 +17,7 @@ class LocalDbBlaster
         end
     end
     def submitTblastxQuery(seq)
-        local_db_blast_query_fh = File.Open(TMP_QUERY_FILENAME,"w")
+        local_db_blast_query_fh = File.open(TMP_QUERY_FILENAME,"w")
         local_db_blast_query_fh.write(seq.bp_list)
         local_db_blast_query_fh.flush
         local_db_blast_query_fh.close
