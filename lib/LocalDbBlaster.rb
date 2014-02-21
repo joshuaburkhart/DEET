@@ -4,8 +4,8 @@ require_relative 'Alignment'
 require_relative 'NCBIBlastResult'
 
 class LocalDbBlaster
-    BLAST_COMMAND = "/N/u/joshburk/Mason/blast/ncbi-blast-2.2.29+-src/c++/ReleaseMT/bin/tblastx -db /N/u/joshburk/Mason/refseq_complete/invertebrate_rna.fna -evalue 1 -query a.query -html"
     TMP_QUERY_FILENAME = "sequence.query"
+    BLAST_COMMAND = "/N/u/joshburk/Mason/blast/ncbi-blast-2.2.29+-src/c++/ReleaseMT/bin/tblastx -db /N/u/joshburk/Mason/refseq_complete/invertebrate_rna.fna -evalue 1 -query #{TMP_QUERY_FILENAME} -html"
 
     def initialize(loghandl)
         if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
