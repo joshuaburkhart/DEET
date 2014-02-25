@@ -185,7 +185,6 @@ seq_keys           = Hash.new
 puts "local_db_blast_results is a #{local_db_blast_results.class} with #{local_db_blast_results.count} members"
 puts "seq_keys is a #{seq_keys.class} with #{seq_keys.count} members"
 
-ret_seq_count      = 0
 seqs.each_with_index {|seq,i|
     dt = Time.now - START_TIME
     h = (dt / 3600).floor
@@ -196,7 +195,7 @@ seqs.each_with_index {|seq,i|
     if(!local_db_blast_result.nil?)
         local_db_blast_results[local_db_blast_result.sequence.id] = local_db_blast_result
         seq_keys[local_db_blast_result.sequence.id] = local_db_blast_result.sequence
-        printf("Retrieved sequence #{ret_seq_count}, #{local_db_blast_result.sequence.id}, from local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+        printf("Retrieved sequence #{i}, #{local_db_blast_result.sequence.id}, from local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
     else
         puts "Blast result nil!"
     end

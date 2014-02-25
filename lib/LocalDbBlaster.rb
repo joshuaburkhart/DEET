@@ -5,7 +5,7 @@ require_relative 'NCBIBlastResult'
 
 class LocalDbBlaster
     TMP_QUERY_FILENAME = "sequence.query"
-    BLAST_COMMAND = "/N/u/joshburk/Mason/blast/ncbi-blast-2.2.29+-src/c++/ReleaseMT/bin/tblastx -db /N/u/joshburk/Mason/refseq_complete/invertebrate_rna.fna -evalue 1 -query #{TMP_QUERY_FILENAME} -html"
+    BLAST_COMMAND = "/N/u/joshburk/Mason/blast/ncbi-blast-2.2.29+-src/c++/ReleaseMT/bin/tblastx -db /N/u/joshburk/Mason/refseq_complete/invertebrate_rna.fna -evalue 1.0e-5 -num_alignments 2 -query #{TMP_QUERY_FILENAME} -html -num_threads 16"
 
     def initialize(loghandl)
         if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
@@ -22,7 +22,6 @@ class LocalDbBlaster
         local_db_blast_query_fh.flush
         local_db_blast_query_fh.close
         html_text = %x(#{BLAST_COMMAND})
-        %x(rm -f #{TMP_QUERY_FILENAME})
         local_db_blast_result = buildLocalDbBlastResult(html_text,seq)
         return local_db_blast_result
     end
@@ -38,13 +37,13 @@ class LocalDbBlaster
                 2.times {
                     text_result.match(RgxLib::BLST_ACCN_GRAB)
                     accession_num = $1
-                    text_result.match(RgxLib::BLST_E_VAL_GRAB)
+                    text_result.match(/\|[^\|]+\|.+\<\/a\>\s+(\S+)/)
                     e_value = $1
                     if(!accession_num.nil? && !e_value.nil?)
                         align = Alignment.new(seq,accession_num,e_value)
                         ncbi_result.addAlignment(align)
                     else
-                        msg = "WARNING: Cannot parse alignment for #{seq.id}\n#{text_result}"
+                        msg = "WARNING: Cannot parse alignment for #{seq.id}. accession_num=#{accession_num}, e_value=?#{e_value}\n#{text_result}"
                         @loghandl.puts msg
                     end
                 }
