@@ -4,8 +4,6 @@ require_relative 'Alignment'
 require_relative 'NCBIBlastResult'
 
 class LocalDbBlaster
-    TMP_QUERY_FILENAME = "sequence.query"
-    BLAST_COMMAND = "/N/u/joshburk/Mason/blast/ncbi-blast-2.2.29+-src/c++/ReleaseMT/bin/tblastx -db /N/u/joshburk/Mason/refseq_complete/invertebrate_rna.fna -evalue 1.0e-5 -num_alignments 2 -query #{TMP_QUERY_FILENAME} -html -num_threads 16"
 
     def initialize(loghandl)
         if(!loghandl.nil? && loghandl.class == File && !loghandl.closed?)
@@ -16,14 +14,8 @@ class LocalDbBlaster
             raise(ArgumentError,"ERROR: loghandl '#{loghandl}' not a valid file handle")
         end
     end
-    def submitTblastxQuery(seq)
-        local_db_blast_query_fh = File.open(TMP_QUERY_FILENAME,"w")
-        local_db_blast_query_fh.write(seq.bp_list)
-        local_db_blast_query_fh.flush
-        local_db_blast_query_fh.close
-        html_text = %x(#{BLAST_COMMAND})
-        local_db_blast_result = buildLocalDbBlastResult(html_text,seq)
-        return local_db_blast_result
+    def submitTblastxQuery(query_filename,out_filename)
+        %x("/N/u/joshburk/Mason/blast/ncbi-blast-2.2.29+-src/c++/ReleaseMT/bin/tblastx -db /N/u/joshburk/Mason/refseq_complete/invertebrate_rna.fna -evalue 1.0e-5 -query #{query_filename} -num_threads 32 -out #{out_filename} -outfmt '10 qseqid sacc evalue' -max_target_seqs 2 -culling_limit 1")
     end
     def buildLocalDbBlastResult(text_result,seq)
         ncbi_result = nil

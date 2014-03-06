@@ -105,6 +105,36 @@ def checkSeqsInHash(seqs,hash,hash_len,loghandl)
     return seqs
 end
 
+def parseBlastResultFromOutput(text_result,seq)
+    ncbi_result = nil 
+    if(!seq.nil? && !text_result.nil?)
+        ncbi_result = NCBIBlastResult.new(seq)
+        if(!text_result.match(/^#{seq.id}/))
+            msg = "INFO: No match reported for #{seq.id}"
+            puts msg
+            @loghandl.puts msg 
+        else
+            text_result.match(/^#{seq.id},(.*?),(.*?),/)
+            accession_num = $1
+            e_value = $2
+            if(!accession_num.nil? && !e_value.nil?)
+                align = Alignment.new(seq,accession_num,e_value)
+                ncbi_result.addAlignment(align)
+            else
+                msg = "WARNING: Cannot parse alignment for #{seq.id}. accession_num=#{accession_num}, e_value=?#{e_value}"
+                puts msg
+                @loghandl.puts msg 
+            end
+        end 
+    else
+        msg = "ERROR: NCBIBlastResult cannot be build using nil objects"
+        @loghandl.puts msg 
+        raise(ArgumentError,msg)
+    end 
+    return ncbi_result
+end
+
+
 def parseFasta(fasta_files,id_grab_expr,loghandl,seqhandl)
     msg = "INFO: Below FASTA files supplied\n#{fasta_files.join("\n")}"
     loghandl.puts msg
@@ -185,19 +215,37 @@ seq_keys           = Hash.new
 puts "local_db_blast_results is a #{local_db_blast_results.class} with #{local_db_blast_results.count} members"
 puts "seq_keys is a #{seq_keys.class} with #{seq_keys.count} members"
 
+seq_batch = Set.new
+QUERY_FILENAME = "query.fasta"
+File.write(QUERY_FILENAME,"") #create an empty file
+OUT_FILENAME = "out.txt"
+seq_batch_count = 0
 seqs.each_with_index {|seq,i|
-    dt = Time.now - START_TIME
-    h = (dt / 3600).floor
-    m = ((dt % 3600) / 60).floor
-    s = ((dt % 3600) % 60).floor
-    printf("Submitting sequence #{i}, id=#{seq.id}, bp_list=#{seq.bp_list}, to local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
-    local_db_blast_result = blaster.submitTblastxQuery(seq)
-    if(!local_db_blast_result.nil?)
-        local_db_blast_results[local_db_blast_result.sequence.id] = local_db_blast_result
-        seq_keys[local_db_blast_result.sequence.id] = local_db_blast_result.sequence
-        printf("Retrieved sequence #{i}, #{local_db_blast_result.sequence.id}, from local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
-    else
-        puts "Blast result nil!"
+    File.write(QUERY_FILENAME,">#{seq.id}\n#{seq.bp_list}\n",File.size(QUERY_FILENAME),mode: 'a')
+    seq_batch << seq
+    if(i % 5000 == 4999)
+        dt = Time.now - START_TIME
+        h = (dt / 3600).floor
+        m = ((dt % 3600) / 60).floor
+        s = ((dt % 3600) % 60).floor
+        printf("Submitting sequence batch #{seq_batch_count} to local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)        
+        blaster.submitTblastxQuery(QUERY_FILENAME,OUT_FILENAME)
+        text_result = File.readlines(OUT_FILENAME)
+        seq_batch_seq_count = 1
+        seq_batch.each{|seq_batch_seq|
+            local_db_blast_result = parseBlastResultFromOutput(text_result,seq_batch_seq)
+            if(!local_db_blast_result.nil?)
+                local_db_blast_results[local_db_blast_result.sequence.id] = local_db_blast_result
+                seq_keys[local_db_blast_result.sequence.id] = local_db_blast_result.sequence
+                printf("Retrieved sequence #{(5000 * seq_batch_count) + seq_batch_seq_count}, #{local_db_blast_result.sequence.id}, from local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+            else
+                puts "Blast result nil!"
+            end
+            seq_batch_seq_count = seq_batch_seq_count + 1
+        }
+        seq_batch = Set.new
+        File.write(QUERY_FILENAME,"")
+        seq_batch_count = seq_batch_count + 1
     end
 }
 msg = "Query results retreived"
