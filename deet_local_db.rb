@@ -230,18 +230,24 @@ seqs.each_with_index {|seq,i|
         s = ((dt % 3600) % 60).floor
         printf("Submitting sequence batch #{seq_batch_count} to local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)        
         blaster.submitTblastxQuery(QUERY_FILENAME,OUT_FILENAME)
-        text_result = File.readlines(OUT_FILENAME)
-        seq_batch_seq_count = 1
-        seq_batch.each{|seq_batch_seq|
-            local_db_blast_result = parseBlastResultFromOutput(text_result,seq_batch_seq)
-            if(!local_db_blast_result.nil?)
-                local_db_blast_results[local_db_blast_result.sequence.id] = local_db_blast_result
-                seq_keys[local_db_blast_result.sequence.id] = local_db_blast_result.sequence
-                printf("Retrieved sequence #{(5000 * seq_batch_count) + seq_batch_seq_count}, #{local_db_blast_result.sequence.id}, from local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
-            else
-                puts "Blast result nil!"
-            end
-            seq_batch_seq_count = seq_batch_seq_count + 1
+        if(File.exist?(OUT_FILENAME))
+            sleep(5) #wait for tblastx to stop writing output
+            text_result = File.readlines(OUT_FILENAME)
+            seq_batch_seq_count = 1
+            seq_batch.each{|seq_batch_seq|
+                local_db_blast_result = parseBlastResultFromOutput(text_result,seq_batch_seq)
+                if(!local_db_blast_result.nil?)
+                    local_db_blast_results[local_db_blast_result.sequence.id] = local_db_blast_result
+                    seq_keys[local_db_blast_result.sequence.id] = local_db_blast_result.sequence
+                    printf("Retrieved sequence #{(5000 * seq_batch_count) + seq_batch_seq_count}, #{local_db_blast_result.sequence.id}, from local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+                else
+                    puts "Blast result nil!"
+                end
+                seq_batch_seq_count = seq_batch_seq_count + 1
+        else
+            puts "Waiting for Sequence batch #{seq_batch_count} to finish..."
+            sleep(60)            
+        end
         }
         seq_batch = Set.new
         File.write(QUERY_FILENAME,"")
