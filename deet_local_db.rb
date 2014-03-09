@@ -244,11 +244,11 @@ seqs.each_with_index {|seq,i|
                     puts "Blast result nil!"
                 end
                 seq_batch_seq_count = seq_batch_seq_count + 1
+            }
         else
             puts "Waiting for Sequence batch #{seq_batch_count} to finish..."
             sleep(60)            
         end
-        }
         seq_batch = Set.new
         File.write(QUERY_FILENAME,"")
         seq_batch_count = seq_batch_count + 1
