@@ -15,7 +15,7 @@ class LocalDbBlaster
         end
     end
     def submitTblastxQuery(query_filename,out_filename)
-        %x("/N/u/joshburk/Mason/blast/ncbi-blast-2.2.29+-src/c++/ReleaseMT/bin/tblastx -db /N/u/joshburk/Mason/refseq_complete/invertebrate_rna.fna -evalue 1.0e-5 -query #{query_filename} -num_threads 32 -out #{out_filename} -outfmt '10 qseqid sacc evalue' -max_target_seqs 2 -culling_limit 1")
+        %x(/N/u/joshburk/Mason/blast/ncbi-blast-2.2.29+-src/c++/ReleaseMT/bin/tblastx -db /N/u/joshburk/Mason/refseq_complete/invertebrate_rna.fna -evalue 1.0e-5 -query #{query_filename} -num_threads 32 -out #{out_filename} -outfmt "10 qseqid sacc evalue" -max_target_seqs 2 -culling_limit 1)
     end
     def buildLocalDbBlastResult(text_result,seq)
         ncbi_result = nil
