@@ -216,9 +216,15 @@ puts "local_db_blast_results is a #{local_db_blast_results.class} with #{local_d
 puts "seq_keys is a #{seq_keys.class} with #{seq_keys.count} members"
 
 seq_batch = Set.new
+
 QUERY_FILENAME = "query.fasta"
 File.write(QUERY_FILENAME,"") #create an empty file
+
 OUT_FILENAME = "out.txt"
+if(File.exist?(OUT_FILENAME))
+    File.delete(OUT_FILENAME) #assure output file does not exist
+end
+
 seq_batch_count = 0
 seqs.each_with_index {|seq,i|
     File.write(QUERY_FILENAME,">#{seq.id}\n#{seq.bp_list}\n",File.size(QUERY_FILENAME),mode: 'a')
