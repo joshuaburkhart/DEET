@@ -241,7 +241,9 @@ seqs.each_with_index {|seq,i|
             sleep(60)            
         end
         sleep(5) #wait for tblastx to stop writing output
-        text_result = File.readlines(OUT_FILENAME)
+        fh = File.open(OUT_FILENAME)
+        text_result = fh.read
+        fh.close
         seq_batch_seq_count = 1
         seq_batch.each{|seq_batch_seq|
             local_db_blast_result = parseBlastResultFromOutput(text_result,seq_batch_seq)
