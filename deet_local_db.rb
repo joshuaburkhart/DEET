@@ -112,7 +112,6 @@ def parseBlastResultFromOutput(text_result,seq)
         if(!text_result.match(/^#{seq.id}/))
             msg = "INFO: No match reported for #{seq.id}"
             puts msg
-            @loghandl.puts msg 
         else
             text_result.match(/^#{seq.id},(.*?),(.*?),/)
             accession_num = $1
@@ -123,12 +122,10 @@ def parseBlastResultFromOutput(text_result,seq)
             else
                 msg = "WARNING: Cannot parse alignment for #{seq.id}. accession_num=#{accession_num}, e_value=?#{e_value}"
                 puts msg
-                @loghandl.puts msg 
             end
         end 
     else
         msg = "ERROR: NCBIBlastResult cannot be build using nil objects"
-        @loghandl.puts msg 
         raise(ArgumentError,msg)
     end 
     return ncbi_result
@@ -290,7 +287,7 @@ local_db_blast_results.values.each_with_index {|local_db_res,j|
             acc_num_groups[acc_num].addRes(local_db_res,expr_sig)
         else
             msg = "WARNING: expr_sig for #{seq_id} is nil. This may indicate FASTA/MA mismatch."
-            @loghandl.puts msg
+            loghandl.puts msg
             puts msg
         end
     else
