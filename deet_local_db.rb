@@ -120,7 +120,9 @@ def parseBlastResultFromOutput(text_result,seq)
                 align = Alignment.new(seq,accession_num,e_value)
                 ncbi_result.addAlignment(align)
             else
-                msg = "WARNING: Cannot parse alignment for #{seq.id}. accession_num=#{accession_num}, e_value=?#{e_value}"
+                text_result.match(/(^#{seq.id}.*)/)
+                line_text = $1
+                msg = "WARNING: Cannot parse alignment for #{seq.id}. accession_num='#{accession_num}', e_value='#{e_value}' found in line text '#{line_text}'"
                 puts msg
             end
         end 
@@ -237,10 +239,11 @@ seqs.each_with_index {|seq,i|
             puts "Waiting for Sequence batch #{seq_batch_count} to finish blasting..."
             sleep(60)            
         end
+        %x(cp #{OUT_FILENAME} #{OUT_FILENAME}.part.#{seq_batch_count})
         sleep(5) #wait for tblastx to stop writing output
         fh = File.open(OUT_FILENAME)
         text_result = fh.read
-        fh.close
+        fh.close        
         seq_batch_seq_count = 1
         seq_batch.each{|seq_batch_seq|
             local_db_blast_result = parseBlastResultFromOutput(text_result,seq_batch_seq)
@@ -252,11 +255,13 @@ seqs.each_with_index {|seq,i|
                 puts "Blast result nil!"
             end
             seq_batch_seq_count = seq_batch_seq_count + 1
-        }
-        seq_batch = Set.new
+        }        
+        %x(cp #{QUERY_FILENAME} #{QUERY_FILENAME}.part.#{seq_batch_count})
         File.write(QUERY_FILENAME,"") #clear query
-        File.delete(OUT_FILENAME) #clear output file
+        File.delete(OUT_FILENAME) #remove output file
         seq_batch_count = seq_batch_count + 1
+        seq_batch = Set.new
+        exit
     end
 }
 msg = "Query results retreived"
