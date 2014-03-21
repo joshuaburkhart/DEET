@@ -113,7 +113,7 @@ def parseBlastResultFromOutput(text_result,seq)
             msg = "INFO: No match reported for #{seq.id}"
             puts msg
         else
-            text_result.match(/^#{seq.id},(.*?),(.*?),/)
+            text_result.match(/^#{seq.id},(.*?),(.*?)/)
             accession_num = $1
             e_value = $2
             if(!accession_num.nil? && !e_value.nil?)
