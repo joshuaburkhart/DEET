@@ -261,7 +261,6 @@ seqs.each_with_index {|seq,i|
         File.delete(OUT_FILENAME) #remove output file
         seq_batch_count = seq_batch_count + 1
         seq_batch = Set.new
-        exit
     end
 }
 msg = "Query results retreived"
