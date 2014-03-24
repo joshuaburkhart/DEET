@@ -230,7 +230,7 @@ seqs.each_with_index {|seq,i|
     seq_batch << seq
     if(i % 5000 == 4999)
         text_result = nil
-        if(File.exist?("#{OUT_FILENAME}.part.#{seq_batch_count}")
+        if(File.exist?("#{OUT_FILENAME}.part.#{seq_batch_count}"))
            fh = File.open("#{OUT_FILENAME}.part.#{seq_batch_count}")
            text_result = fh.read
            fh.close        
