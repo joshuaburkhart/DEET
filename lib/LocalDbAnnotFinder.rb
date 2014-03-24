@@ -17,7 +17,7 @@ class LocalDbAnnotFinder < NCBIBlaster
         super(loghandl)
     end
     def fetchAnnotation
-        @annotation_line = %x(cat #{LOCAL_DB_FASTA_FILENAME} | grep #{@acc_num})
+        @annot_line = %x(cat #{LOCAL_DB_FASTA_FILENAME} | grep #{@acc_num})
     end
     def getLocusTag
         if(@locus_tag.nil?)
