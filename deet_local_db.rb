@@ -229,21 +229,28 @@ seqs.each_with_index {|seq,i|
     File.write(QUERY_FILENAME,">#{seq.id}\n#{seq.bp_list}\n",File.size(QUERY_FILENAME),mode: 'a')
     seq_batch << seq
     if(i % 5000 == 4999)
-        dt = Time.now - START_TIME
-        h = (dt / 3600).floor
-        m = ((dt % 3600) / 60).floor
-        s = ((dt % 3600) % 60).floor
-        printf("Submitting sequence batch #{seq_batch_count} to local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)        
-        blaster.submitTblastxQuery(QUERY_FILENAME,OUT_FILENAME)
-        while(!File.exist?(OUT_FILENAME))
-            puts "Waiting for Sequence batch #{seq_batch_count} to finish blasting..."
-            sleep(60)            
+        text_result = nil
+        if(File.exist?("#{OUT_FILENAME}.part.#{seq_batch_count}")
+           fh = File.open("#{OUT_FILENAME}.part.#{seq_batch_count}")
+           text_result = fh.read
+           fh.close        
+        else
+            dt = Time.now - START_TIME
+            h = (dt / 3600).floor
+            m = ((dt % 3600) / 60).floor
+            s = ((dt % 3600) % 60).floor
+            printf("Submitting sequence batch #{seq_batch_count} to local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)        
+            blaster.submitTblastxQuery(QUERY_FILENAME,OUT_FILENAME)
+            while(!File.exist?(OUT_FILENAME))
+                puts "Waiting for Sequence batch #{seq_batch_count} to finish blasting..."
+                sleep(60)            
+            end
+            %x(cp #{OUT_FILENAME} #{OUT_FILENAME}.part.#{seq_batch_count})
+            sleep(5) #wait for tblastx to stop writing output
+            fh = File.open(OUT_FILENAME)
+            text_result = fh.read
+            fh.close        
         end
-        %x(cp #{OUT_FILENAME} #{OUT_FILENAME}.part.#{seq_batch_count})
-        sleep(5) #wait for tblastx to stop writing output
-        fh = File.open(OUT_FILENAME)
-        text_result = fh.read
-        fh.close        
         seq_batch_seq_count = 1
         seq_batch.each{|seq_batch_seq|
             local_db_blast_result = parseBlastResultFromOutput(text_result,seq_batch_seq)
