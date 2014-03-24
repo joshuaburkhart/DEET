@@ -2,7 +2,7 @@ require 'net/http'
 require_relative 'RgxLib'
 require_relative 'NCBIBlaster'
 
-class AnnotFinder < NCBIBlaster
+class LocalDbAnnotFinder < NCBIBlaster
     LOCAL_DB_FASTA_FILENAME = "/N/u/joshburk/Mason/refseq_complete/invertebrate_rna.fna.headers_only"
     @name
     @locus_tag
