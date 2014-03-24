@@ -56,7 +56,7 @@ class LocalDbAnnotFinder < NCBIBlaster
                 end
                 @name = ans
             else
-                msg = "ERROR: annotation page not set"
+                msg = "ERROR: annotation line nil for acc num #{@acc_num}"
                 @loghandl.puts msg
                 raise(StandardError,msg)
             end
