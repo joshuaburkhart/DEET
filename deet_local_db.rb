@@ -12,6 +12,7 @@ require_relative 'lib/RNAseqHashBuilder'
 require_relative 'lib/RgxLib'
 require_relative 'lib/LocalDbBlaster'
 require_relative 'lib/LocalDbAnnotFinder'
+require_relative 'lib/AccessionNumGroup'
 
 START_TIME = Time.now
 EST_OFFSET = (-5 * 3600)
@@ -272,6 +273,7 @@ seqs.each_with_index {|seq,i|
         seq_batch = Set.new
     end
 }
+#TODO: submit remaining sequences & add results to existing
 msg = "Query results retreived"
 loghandl.puts msg
 puts msg

@@ -1,0 +1,27 @@
+..
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Committer: Joshua Burkhart <burkhart@erebus.(none)>
+#
+# On branch master
+# Changes to be committed:
+#   (use "git reset HEAD <file>..." to unstage)
+#
+#	modified:   deet_local_db.rb
+#
+diff --git a/deet_local_db.rb b/deet_local_db.rb
+index d05def0..abe187a 100644
+--- a/deet_local_db.rb
++++ b/deet_local_db.rb
+@@ -265,7 +265,9 @@ seqs.each_with_index {|seq,i|
+         }        
+         %x(cp #{QUERY_FILENAME} #{QUERY_FILENAME}.part.#{seq_batch_count})
+         File.write(QUERY_FILENAME,"") #clear query
+-        File.delete(OUT_FILENAME) #remove output file
++        if(File.exist?(OUT_FILENAME))
++            File.delete(OUT_FILENAME) #remove output file
++        end
+         seq_batch_count = seq_batch_count + 1
+         seq_batch = Set.new
+     end
