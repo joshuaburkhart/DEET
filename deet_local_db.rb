@@ -230,15 +230,15 @@ seqs.each_with_index {|seq,i|
     seq_batch << seq
     if(i % 5000 == 4999)
         text_result = nil
+        dt = Time.now - START_TIME
+        h = (dt / 3600).floor
+        m = ((dt % 3600) / 60).floor
+        s = ((dt % 3600) % 60).floor
         if(File.exist?("#{OUT_FILENAME}.part.#{seq_batch_count}"))
-           fh = File.open("#{OUT_FILENAME}.part.#{seq_batch_count}")
-           text_result = fh.read
-           fh.close        
+            fh = File.open("#{OUT_FILENAME}.part.#{seq_batch_count}")
+            text_result = fh.read
+            fh.close        
         else
-            dt = Time.now - START_TIME
-            h = (dt / 3600).floor
-            m = ((dt % 3600) / 60).floor
-            s = ((dt % 3600) % 60).floor
             printf("Submitting sequence batch #{seq_batch_count} to local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)        
             blaster.submitTblastxQuery(QUERY_FILENAME,OUT_FILENAME)
             while(!File.exist?(OUT_FILENAME))
