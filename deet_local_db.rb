@@ -265,7 +265,9 @@ seqs.each_with_index {|seq,i|
         }        
         %x(cp #{QUERY_FILENAME} #{QUERY_FILENAME}.part.#{seq_batch_count})
         File.write(QUERY_FILENAME,"") #clear query
-        File.delete(OUT_FILENAME) #remove output file
+        if(File.exist?(OUT_FILENAME))
+            File.delete(OUT_FILENAME) #remove output file
+        end
         seq_batch_count = seq_batch_count + 1
         seq_batch = Set.new
     end
