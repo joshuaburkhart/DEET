@@ -23,7 +23,7 @@ class LocalDbAnnotFinder < NCBIBlaster
         if(@locus_tag.nil?)
             if(!@annot_line.nil?)
                 ans = nil
-                @annot_page.match(/\|.*\|.*\|\s*.*\s*\((.*)\).*/)
+                @annot_line.match(/\|.*\|.*\|\s*.*\s*\((.*)\).*/)
                 locusTag = $1
                 if(!locusTag.nil? && locusTag != "")
                     ans = locusTag
