@@ -215,7 +215,6 @@ seq_keys           = Hash.new
 puts "local_db_blast_results is a #{local_db_blast_results.class} with #{local_db_blast_results.count} members"
 puts "seq_keys is a #{seq_keys.class} with #{seq_keys.count} members"
 
-seq_batch = Set.new
 
 QUERY_FILENAME = "query.fasta"
 File.write(QUERY_FILENAME,"") #create an empty file
@@ -225,6 +224,8 @@ if(File.exist?(OUT_FILENAME))
     File.delete(OUT_FILENAME) #assure output file does not exist
 end
 
+seq_batch = Set.new
+seq_batch_seq_count = 1
 seq_batch_count = 0
 seqs.each_with_index {|seq,i|
     File.write(QUERY_FILENAME,">#{seq.id}\n#{seq.bp_list}\n",File.size(QUERY_FILENAME),mode: 'a')
@@ -252,7 +253,6 @@ seqs.each_with_index {|seq,i|
             text_result = fh.read
             fh.close        
         end
-        seq_batch_seq_count = 1
         seq_batch.each{|seq_batch_seq|
             local_db_blast_result = parseBlastResultFromOutput(text_result,seq_batch_seq)
             if(!local_db_blast_result.nil?)
@@ -273,7 +273,44 @@ seqs.each_with_index {|seq,i|
         seq_batch = Set.new
     end
 }
-#TODO: submit remaining sequences & add results to existing
+text_result = nil
+dt = Time.now - START_TIME
+h = (dt / 3600).floor
+m = ((dt % 3600) / 60).floor
+s = ((dt % 3600) % 60).floor
+if(File.exist?("#{OUT_FILENAME}.part.#{seq_batch_count}"))
+    fh = File.open("#{OUT_FILENAME}.part.#{seq_batch_count}")
+    text_result = fh.read
+    fh.close        
+else
+    printf("Submitting sequence batch #{seq_batch_count} to local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)        
+    blaster.submitTblastxQuery(QUERY_FILENAME,OUT_FILENAME)
+    while(!File.exist?(OUT_FILENAME))
+        puts "Waiting for Sequence batch #{seq_batch_count} to finish blasting..."
+        sleep(60)            
+    end
+    %x(cp #{OUT_FILENAME} #{OUT_FILENAME}.part.#{seq_batch_count})
+    sleep(5) #wait for tblastx to stop writing output
+    fh = File.open(OUT_FILENAME)
+    text_result = fh.read
+    fh.close        
+end
+seq_batch.each{|seq_batch_seq|
+    local_db_blast_result = parseBlastResultFromOutput(text_result,seq_batch_seq)
+    if(!local_db_blast_result.nil?)
+        local_db_blast_results[local_db_blast_result.sequence.id] = local_db_blast_result
+        seq_keys[local_db_blast_result.sequence.id] = local_db_blast_result.sequence
+        printf("Retrieved sequence #{(5000 * seq_batch_count) + seq_batch_seq_count}, #{local_db_blast_result.sequence.id}, from local blast db at T+%02.0f:%02.0f:%02.0f\n",h,m,s)
+    else
+        puts "Blast result nil!"
+    end
+    seq_batch_seq_count = seq_batch_seq_count + 1
+}        
+%x(cp #{QUERY_FILENAME} #{QUERY_FILENAME}.part.#{seq_batch_count})
+File.write(QUERY_FILENAME,"") #clear query
+if(File.exist?(OUT_FILENAME))
+    File.delete(OUT_FILENAME) #remove output file
+end
 msg = "Query results retreived"
 loghandl.puts msg
 puts msg
