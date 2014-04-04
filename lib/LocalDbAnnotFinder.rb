@@ -45,7 +45,7 @@ class LocalDbAnnotFinder < NCBIBlaster
         if(@name.nil?)
             if(!@annot_line.nil?)
                 ans = nil
-                @annot_line.match(/\|.*\|.*\|\s*(.*)\s*\(.*\).*/)
+                @annot_line.match(/\|.*\|.*\|\s*(.*)\s*\.*\.*/)
                 name = $1
                 if(!name.nil? && name != "")
                     ans = name
