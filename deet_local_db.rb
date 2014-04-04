@@ -329,10 +329,14 @@ local_db_blast_results.values.each_with_index {|local_db_res,j|
     $stdout.flush
     if(local_db_res.hasAlignments?)
         acc_num = local_db_res.bestAlignment.accession_num        
-        local_annot_finder = LocalDbAnnotFinder.new(acc_num,loghandl) #this searches the fasta used to create the local blast database
-        annot_name = local_annot_finder.getName
-        annot_locus_tag = local_annot_finder.getLocusTag
-        acc_num_groups[acc_num] = AccessionNumGroup.new(annot_name,annot_locus_tag,acc_num,expr_sig_len,loghandl)
+        if(acc_num_groups[acc_num].nil?)
+            local_annot_finder = LocalDbAnnotFinder.new(acc_num,loghandl) #this searches the fasta used to create the local blast database
+            annot_name = local_annot_finder.getName
+            annot_locus_tag = local_annot_finder.getLocusTag
+            acc_num_groups[acc_num] = AccessionNumGroup.new(annot_name,annot_locus_tag,acc_num,expr_sig_len,loghandl)
+        else
+            puts "acc_num #{acc_num} already in acc_num_groups!!!"
+        end
         seq_id   = local_db_res.sequence.id
         expr_sig = seq_hash[seq_id]
         if(!expr_sig.nil?)
