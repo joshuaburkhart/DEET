@@ -1,11 +1,7 @@
-<<<<<<< HEAD
 DEET 
 [![DOI](https://zenodo.org/badge/19044/joshuaburkhart/DEET.svg)](https://zenodo.org/badge/latestdoi/19044/joshuaburkhart/DEET)
 ====
 
-=======
-#DEET
->>>>>>> 1253b9bb68460c9e9812fdf5bb403420f7d9cf5b
 A program that finds and annotates genes using contigs and singletons yielded from mosquito microarray assays.
 
 ##Input
