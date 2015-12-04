@@ -3,7 +3,7 @@ require_relative 'RgxLib'
 require_relative 'NCBIBlaster'
 
 class LocalDbAnnotFinder < NCBIBlaster
-    LOCAL_DB_FASTA_FILENAME = "/N/u/joshburk/Mason/refseq_complete/invertebrate_rna.fna.headers_only"
+    LOCAL_DB_FASTA_FILENAME = "/home0/jburkhar/biting_microarray/transcriptome/ftp.ncbi.nlm.nih.gov/refseq/release/invertebrate/invertebrate_rna.fna.headers_only"
     @name
     @locus_tag
     def initialize(acc_num,loghandl)
