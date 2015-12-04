@@ -64,17 +64,18 @@ A program that finds and annotates genes using contigs and singletons yielded fr
 ### *run-deet_local.pbs*
     --
     #PBS -N deet_local
-    #PBS -l walltime=128:00:00
-    #PBS -q batch
-    #PBS -l vmem=500gb
+    #PBS -l walltime=24:00:00
+    #PBS -q fatnodes
+    #PBS -l vmem=512gb
     #PBS -M burkhart.joshua@gmail.com
     #PBS -m abe
     #PBS -l nodes=1:ppn=32
 
     module load ruby
+    module load blast/2.2.30+
 
-    cd ~/DEET && \
+    cd ~/software_projects/DEET && \
     ruby deet_local_db.rb \
-    -f /path/to/Contigs_and_Singletons.simple.fasta \
-    -m /path/to/new_photoperiod_ma-2015-05-05/new_photoperiod_ma/
+    -f ~/biting_microarray/fasta/454wyeomyia.CONTIGnATCG.fa \
+    -m ~/biting_microarray/ma/
     --
