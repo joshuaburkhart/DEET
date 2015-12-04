@@ -52,10 +52,8 @@ A program that finds and annotates genes using contigs and singletons yielded fr
     $ cat invertebrate.rna.fna | grep -e '^>' > invertebrate_rna.fna.headers_only
 
 ## Issues
-    1. lib/LocalDbAnnotFinder.rb:line 6 must be updated to match the 
-       invertebrate_rna.fna.headers_only file path
-    2. lib/LocalDbBlaster.rb:line 18 must be update to match the tblastx and 
-       invertebrate_rna.fna file paths
+    1. lib/LocalDbAnnotFinder.rb:line 6 must be updated to match *invertebrate_rna.fna.headers_only* path
+    2. lib/LocalDbBlaster.rb:line 18 must be update to match *tblastx* and *invertebrate_rna.fna* paths
 
 ## Run DEET Against Local DB
     $ module load ruby
