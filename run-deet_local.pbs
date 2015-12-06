@@ -1,6 +1,6 @@
 #PBS -N deet_local
-#PBS -l walltime=24:00:00
-#PBS -q fatnodes
+#PBS -l walltime=128:00:00
+#PBS -q longfat
 #PBS -l vmem=512gb
 #PBS -M burkhart.joshua@gmail.com
 #PBS -m abe
