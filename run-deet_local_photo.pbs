@@ -1,0 +1,15 @@
+#PBS -N deet_local_photo
+#PBS -l walltime=128:00:00
+#PBS -q longfat
+#PBS -l vmem=512gb
+#PBS -M burkhart.joshua@gmail.com
+#PBS -m abe
+#PBS -l nodes=1:ppn=32
+
+module load ruby
+module load blast/2.2.30+
+
+cd ~/software_projects/DEET && \
+ruby deet_local_db.rb \
+-f ~/software_projects/DEET/photo_input_fasta/Contigs_and_Singletons.simple.fasta \
+-m ~/software_projects/DEET/photo_input_mas/
