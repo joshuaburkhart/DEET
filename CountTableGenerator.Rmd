@@ -1,0 +1,68 @@
+---
+title: "CountTableGenerator"
+author: "Joshua Burkhart"
+date: "9/1/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libs, include=FALSE}
+library(dplyr)
+library(seqinr)
+library(magrittr)
+```
+
+```{r globs, include=FALSE}
+DATA_DIR <- "/Users/joshuaburkhart/Research/DEET/photoperiod/"
+TRANSCRIPTOME_FASTA <- paste(DATA_DIR,"Contigs_and_Singletons.simple.fasta",sep="")
+MA_DIR <- paste(DATA_DIR,"new_ma/",sep="")
+SEQS_CSV <- paste(DATA_DIR,"1460605014.seqs.csv",sep="")
+```
+
+```{r load, include=FALSE}
+transcriptome_fasta <- seqinr::read.fasta(TRANSCRIPTOME_FASTA)
+
+mas <- list()
+ma_dir <- dir(path = MA_DIR, pattern = "*.gene.de.txt")
+for (ma in 1:length(ma_dir)){
+ mas[[ma]] <- read.table(paste(MA_DIR,ma_dir[ma],sep=""))
+}
+
+seqs_csv <- read.csv(SEQS_CSV,header=TRUE,sep="~",stringsAsFactors = FALSE)
+```
+
+```{r calculate_counts}
+
+transcriptome_fasta %>% length()
+
+seqs_csv %>% nrow()
+
+ma1_num_seq <- mas[[1]] %>% nrow()
+for(ma in 2:length(mas)){
+  assertthat::assert_that(nrow(mas[[ma]]) == ma1_num_seq)
+}
+print(ma1_num_seq)
+
+seqs_csv$Status %>% table()
+
+seqs_csv$Paralog.. %>% table()
+
+table(seqs_csv$Status, seqs_csv$Paralog..)
+
+seqs_csv <- seqs_csv %>% 
+  dplyr::rowwise() %>%
+  dplyr::mutate(SeqType = ifelse(grepl("CONTIG",ID),
+                                            "CONTIG",
+                                            ifelse(grepl("F5",ID),
+                                                   "SINGLETON",
+                                                   "UNKNOWN")))
+
+seqs_csv$SeqType %>% table()
+
+table(seqs_csv$SeqType, seqs_csv$Status)
+
+table(seqs_csv$SeqType, seqs_csv$Paralog..)
+```
