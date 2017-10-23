@@ -19,7 +19,6 @@ RF3_TRANSCRIPTOME <-
   paste(TRANSCRIPTOME_DIR,
         "Culex_quinquefasciatus.CpipJ2.cds.all.fa",
         sep = "")
-
 # generated with:
 # https://github.com/joshuaburkhart/bio
 #$ ma_inverter.rb biting/ma/limma.WIOB-KC.gene.de.txt biting/ma/limma.KC-WIOB.gene.de.txt
@@ -30,9 +29,10 @@ QUAD_DATA <-
 # first spreadsheet from workbook 4
 QRY_SEQ_IDS <-
   "/home/burkhart/Research/Bradshaw/DEET/QuadPPlotGenes from John 29 Nov 2016 IV odorant.csv"
-
 SINGLETON_REGEX <- "^F5BTJ3O0"
 CONTIG_REGEX <- "^CONTIG"
+OUTPUT_DIR <- "/home/burkhart/Software/DEET/output/"
+RESULTS_FILEPATH <- paste(OUTPUT_DIR,"quadPlotHomologueAlignments.csv",sep="")
 
 # read quad data
 quad_df <- read.csv(QUAD_DATA,
@@ -136,5 +136,47 @@ for (qry_seq_id in names(qry_transcriptome_filt)) {
   itr <- itr + 1
 }
 
+results_df <- results_df %>%
+  dplyr::mutate(Quadrant = ifelse(
+    quadplot_x_coordinate < 0,
+    ifelse(quadplot_y_coordinate < 0,
+           "LL gene",
+           "UL gene"),
+    ifelse(quadplot_y_coordinate < 0,
+           "LR gene",
+           "UR gene")
+  ))
+
+# save results to file
+write.csv(results_df,RESULTS_FILEPATH)
 
 # create example quadplot for spotchecking with quadrant counts
+palette(c("firebrick2","black","black","deepskyblue"))
+plot(x=results_df$quadplot_x_coordinate,
+     y=results_df$quadplot_y_coordinate,
+     pch="O",
+     col=as.factor(results_df$Quadrant),
+     xlab="Selection",
+     ylab="End Points of Evolution",
+     xlim=c(-6.9,6.9),
+     ylim=c(-6.9,6.9))
+abline(a=0,b=0)
+abline(v=0)
+#grid()
+legend("topright",
+       legend=sum(results_df$quadplot_x_coordinate > 0 &
+                               results_df$quadplot_y_coordinate > 0),
+       bty="n")
+legend("topleft",
+       legend=sum(results_df$quadplot_x_coordinate < 0 &
+                              results_df$quadplot_y_coordinate > 0),
+       bty="n")
+legend("bottomleft",
+       legend=sum(results_df$quadplot_x_coordinate < 0 &
+                                 results_df$quadplot_y_coordinate < 0),
+       bty="n")
+legend("bottomright",
+       legend=sum(results_df$quadplot_x_coordinate > 0 &
+                                  results_df$quadplot_y_coordinate < 0),
+       bty="n")
+
