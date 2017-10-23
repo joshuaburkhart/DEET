@@ -1,0 +1,1 @@
+tblastn -query Aedes_aegypti_ClockGenes_UniprotSeqs.fasta -db Contigs_and_Singletons.simple.fasta -out tblastn_output.txt -parse_deflines -num_threads 3 -max_target_seqs 1 -outfmt '10 qacc sseqid evalue'
