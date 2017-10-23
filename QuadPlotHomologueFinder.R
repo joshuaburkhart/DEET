@@ -72,9 +72,8 @@ rf3_db <- rBLAST::blast(RF3_TRANSCRIPTOME, type = "tblastx")
 results_df <- data.frame()
 
 itr <- 0
+tot <- length(qry_transcriptome_filt)
 for (qry_seq_id in names(qry_transcriptome_filt)) {
-  print(itr)
-  itr <- itr + 1
   
   # blast query seqs to references
   rf1_res <- predict(rf1_db,
@@ -130,6 +129,11 @@ for (qry_seq_id in names(qry_transcriptome_filt)) {
                                  Culex_quinquefasciatus_e = rf3_e,
                                  quadplot_x_coordinate = x_coord,
                                  quadplot_y_coordinate = y_coord))
+  
+  if(itr %% 100 == 0){
+    print(paste("processed ",itr," of ",tot," query sequences..."))
+  }
+  itr <- itr + 1
 }
 
 
