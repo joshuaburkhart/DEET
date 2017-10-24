@@ -16,10 +16,14 @@ library(magrittr)
 ```
 
 ```{r globs, include=FALSE}
-DATA_DIR <- "/Users/joshuaburkhart/Research/DEET/photoperiod/"
-TRANSCRIPTOME_FASTA <- paste(DATA_DIR,"Contigs_and_Singletons.simple.fasta",sep="")
-MA_DIR <- paste(DATA_DIR,"new_ma/",sep="")
-SEQS_CSV <- paste(DATA_DIR,"1460605014.seqs.csv",sep="")
+#DATA_DIR <- "/Users/joshuaburkhart/Research/DEET/photoperiod/"
+DATA_DIR <- "/home/burkhart/Research/Bradshaw/DEET/biting/"
+#TRANSCRIPTOME_FASTA <- paste(DATA_DIR,"Contigs_and_Singletons.simple.fasta",sep="")
+TRANSCRIPTOME_FASTA <- paste(DATA_DIR,"454wyeomyia.CONTIGnATCG.fa",sep="")
+#MA_DIR <- paste(DATA_DIR,"new_ma/",sep="")
+MA_DIR <- paste(DATA_DIR,"ma/",sep="")
+#SEQS_CSV <- paste(DATA_DIR,"1460605014.seqs.csv",sep="")
+SEQS_CSV <- paste(DATA_DIR,"analysis/1450736707.seqs.csv",sep="")
 ```
 
 ```{r load, include=FALSE}
